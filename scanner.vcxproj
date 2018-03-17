@@ -115,6 +115,8 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DllLoader.cpp" />
+    <ClCompile Include="InterfaceLLT_2.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
   </ItemGroup>
@@ -126,6 +128,12 @@
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="mainwindow.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DllLoader.h" />
+    <ClInclude Include="InterfaceLLT_2.h" />
+    <ClInclude Include="scanner.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
