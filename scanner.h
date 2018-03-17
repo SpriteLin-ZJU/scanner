@@ -13,9 +13,9 @@ public:
 	~Scanner();
 
 private:
-	static CInterfaceLLT* m_pLLT;
-	static unsigned int m_uiResolution;
-	static TScannerType m_tscanCONTROLType;
+	CInterfaceLLT* m_pLLT;
+	unsigned int m_uiResolution;
+	TScannerType m_tscanCONTROLType;
 
 	std::vector<unsigned int> m_vuiInterfaces;
 	std::vector<DWORD> vdwResolutions;

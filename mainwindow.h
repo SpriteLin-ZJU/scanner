@@ -1,7 +1,8 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
-#include "ui_mainwindow.h"
+#include <qlabel.h>
+#include "scanner.h"
 
 class MainWindow : public QMainWindow
 {
@@ -11,5 +12,5 @@ public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
 
 private:
-	Ui::MainWindowClass ui;
+	
 };
