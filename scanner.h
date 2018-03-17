@@ -11,7 +11,7 @@ class Scanner
 public:
 	Scanner();
 	~Scanner();
-
+	
 private:
 	CInterfaceLLT* m_pLLT;
 	unsigned int m_uiResolution;
