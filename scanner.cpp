@@ -2,7 +2,7 @@
 
 Scanner::Scanner()
 {
-	m_pLLT = new CInterfaceLLT("LLT.dll", &bLoadError);
+	m_pLLT = new CInterfaceLLT("LLT.dll", &m_bLoadError);
 }
 
 Scanner::~Scanner()
