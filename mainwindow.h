@@ -2,7 +2,7 @@
 
 #include <QtWidgets/QMainWindow>
 
-class Scanner;
+class ScannerBox;
 
 class MainWindow : public QMainWindow
 {
@@ -12,7 +12,6 @@ public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
 
 private:
-	Scanner * m_scanner;
 	void createActions();
 	void createMenus();
 	void createToolBars();
@@ -26,5 +25,6 @@ private:
 
 	QMenu* m_fileMenu;
 
+	ScannerBox* m_scannerBox;
 
 };

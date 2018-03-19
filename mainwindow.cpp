@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "scanner.h"
+#include "scannerbox.h"
 #include <QAction>
 #include <QMenuBar>
 #include <QStatusBar>
@@ -10,6 +11,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	createActions();
 	createMenus();
+
+	m_scannerBox = new ScannerBox(this);
+	setCentralWidget(m_scannerBox);
 }
 
 void MainWindow::createActions()
