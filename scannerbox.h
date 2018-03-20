@@ -1,4 +1,5 @@
 #pragma once
+#include "InterfaceLLT_2.h"
 #include <QtGui>
 #include <QWidget>
 
@@ -33,7 +34,7 @@ private:
 	//传感器接口
 	CInterfaceLLT* m_scanner;
 	unsigned int m_uiResolution = 0;
-	TScannerType m_tscanCONTROLType = scanCONTROL2xxx;
+	TScannerType m_tscanCONTROLType;
 	
 	std::vector<unsigned int> m_vuiInterfaces;
 	unsigned int m_uiInterfaceCount = 0;

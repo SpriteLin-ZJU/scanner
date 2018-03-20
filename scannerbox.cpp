@@ -1,5 +1,4 @@
 #include "scannerbox.h"
-#include "InterfaceLLT_2.h"
 #include "settingsdialog.h"
 
 #include <QLayout>
@@ -62,16 +61,21 @@ ScannerBox::ScannerBox(QWidget *parent) :
 void ScannerBox::ipSearch()
 {
 	//搜索连接至电脑的IP地址
-
+	//清空之前所储存的IP
+	m_ipComboBox->clear();		//注意会发送currentIndexChanged(int)信号
+	std::vector<unsigned int>().swap(m_vuiInterfaces);
 	m_vuiInterfaces.resize(5);
-	m_iRetValue = m_scanner->search(m_vuiInterfaces);
-	
-	if (iRetValue < 0) {
-		OnError("Error during SetDeviceInterface", iRetValue);
+
+	m_iRetValue = m_scanner->GetDeviceInterfacesFast(m_vuiInterfaces.data(), (unsigned int)m_vuiInterfaces.size());
+		
+	if (m_iRetValue < 0) {
+		OnError("Error during Searching DeviceInterface", m_iRetValue);
 		return;
 	}
+	else if (m_iRetValue > 5)
+		m_uiInterfaceCount = m_vuiInterfaces.size();
 	else
-		m_uiInterfaceCount = iRetValue;
+		m_uiInterfaceCount = m_iRetValue;
 
 	for (int i = 0; i < m_uiInterfaceCount; i++) {
 		QString s = QString::number(m_vuiInterfaces[i], 16).toUpper();
@@ -82,14 +86,37 @@ void ScannerBox::ipSearch()
 void ScannerBox::scanConnect()
 {
 	int index = m_ipComboBox->currentIndex();
-	if (index < 0) return;			//ComBox为空集
+	if (index < 0) return;			//ComBox为空集或未选择IP地址
 
-	iRetValue = m_scanner->connect(m_vuiInterfaces[index],m_sScanType);
-	if (iRetValue < GENERAL_FUNCTION_OK) {
-		OnError("Error during connect", iRetValue);
+	//连接至指定的IP地址
+	m_iRetValue = m_scanner->SetDeviceInterface(m_vuiInterfaces[index], 0);
+	m_iRetValue = m_scanner->Connect();
+
+	if (m_iRetValue != GENERAL_FUNCTION_OK) {
+		OnError("Error during connect", m_iRetValue);
 		return;
 	}
-	QString s = "Type:" + QString::fromStdString(m_sScanType);
+
+	//获取设备型号
+	m_iRetValue = m_scanner->GetLLTType(&m_tscanCONTROLType);
+	if (m_iRetValue!=GENERAL_FUNCTION_OK)
+	{
+		OnError("Error during GetLLTType", m_iRetValue);
+		return;
+	}
+	QString scanCRONTROLType;
+	if (m_tscanCONTROLType >= scanCONTROL28xx_25 && m_tscanCONTROLType <= scanCONTROL28xx_xxx)
+		scanCRONTROLType = "scanCONTROL28xx";
+	else if (m_tscanCONTROLType >= scanCONTROL27xx_25 && m_tscanCONTROLType <= scanCONTROL27xx_xxx)
+		scanCRONTROLType = "scanCONTROL27xx";
+	else if (m_tscanCONTROLType >= scanCONTROL26xx_25 && m_tscanCONTROLType <= scanCONTROL26xx_xxx)
+		scanCRONTROLType = "scanCONTROL26xx";
+	else if (m_tscanCONTROLType >= scanCONTROL29xx_25 && m_tscanCONTROLType <= scanCONTROL29xx_xxx)
+		scanCRONTROLType = "scanCONTROL29xx";
+	else
+		scanCRONTROLType = "undefined";
+	QString s = "Type:	" + scanCRONTROLType;
+	
 	m_scanType->setText(s);
 	m_advancedSettings->setEnabled(true);
 }
