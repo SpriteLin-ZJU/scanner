@@ -1,10 +1,9 @@
 #pragma once
-
 #include <QtGui>
 #include <QWidget>
 
 class QLabel;
-class Scanner;
+class CInterfaceLLT;
 class QComboBox;
 class QGroupBox;
 class QPushButton;
@@ -14,11 +13,13 @@ class ScannerBox : public QWidget
 	Q_OBJECT
 public:
 	ScannerBox(QWidget *parent = Q_NULLPTR);
+
 private:
 	void ipSearch();
+	void scanConnect();
 	void advancedSettings();
+	void OnError(QString errorText, int errorValue);
 
-	Scanner* m_scanner;
 	
 	QGroupBox* m_scanGroupBox;
 	QLabel* m_ipLabel;
@@ -28,5 +29,17 @@ private:
 	QPushButton* m_ipSearch;
 	QPushButton* m_scanConnect;
 	QPushButton* m_advancedSettings;
+	
+	//传感器接口
+	CInterfaceLLT* m_scanner;
+	unsigned int m_uiResolution = 0;
+	TScannerType m_tscanCONTROLType = scanCONTROL2xxx;
+	
+	std::vector<unsigned int> m_vuiInterfaces;
+	unsigned int m_uiInterfaceCount = 0;
+	std::vector<DWORD> m_vdwResolutions;
+
+	bool m_bLoadError;
+	int m_iRetValue;
 
 };

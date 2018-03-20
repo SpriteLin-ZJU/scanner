@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include <memory>
 
 #include "InterfaceLLT_2.h"
 
@@ -11,13 +10,16 @@ class Scanner
 public:
 	Scanner();
 	~Scanner();
+
+	int search(std::vector<unsigned int> &m_vuiInterfaces);
+	int connect(unsigned int uiInterface,std::string &scanType);
+
 private:
 	CInterfaceLLT* m_pLLT;
 	unsigned int m_uiResolution;
 	TScannerType m_tscanCONTROLType;
 
-	std::vector<unsigned int> m_vuiInterfaces;
-	std::vector<DWORD> m_vdwResolutions;
 	bool m_bLoadError;
 	int m_iRetValue;
+
 };

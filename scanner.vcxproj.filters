@@ -42,10 +42,10 @@
     <ClCompile Include="InterfaceLLT_2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scanner.cpp">
+    <ClCompile Include="scannerbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scannerbox.cpp">
+    <ClCompile Include="settingsdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,6 +54,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="scannerbox.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="settingsdialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -68,9 +71,6 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="scanner.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DllLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -123,10 +123,8 @@
     <ClCompile Include="InterfaceLLT_2.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
-    <ClCompile Include="scanner.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="scannerbox.cpp" />
+    <ClCompile Include="settingsdialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h" />
@@ -140,8 +138,8 @@
   <ItemGroup>
     <ClInclude Include="DllLoader.h" />
     <ClInclude Include="InterfaceLLT_2.h" />
-    <ClInclude Include="scanner.h" />
     <QtMoc Include="scannerbox.h" />
+    <QtMoc Include="settingsdialog.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
