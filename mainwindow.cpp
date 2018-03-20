@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "scanner.h"
 #include "scannerbox.h"
 #include <QAction>
 #include <QMenuBar>
