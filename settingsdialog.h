@@ -9,6 +9,7 @@ class QComboBox;
 class QLineEdit;
 class QCheckBox;
 class QTabWidget;
+class QSpinBox;
 
 class SettingsDialog : public QDialog
 {
@@ -19,6 +20,7 @@ public:
 private:
 	void readSettings();
 	QWidget* createGeneralTabWidget();
+	QWidget* createInterfaceTabWidget();
 
 	QTabWidget* m_settingTabWidget;
 	//快门设置组
@@ -47,5 +49,29 @@ private:
 	QLabel* m_laserPowerLabel;
 	QComboBox* m_laserPowerCombBox;
 
+	//接口RS422设置组
+	QGroupBox* m_RS422GroupBox;
+	QLabel* m_RS422ModeLabel;
+	QComboBox* m_RS422ModeComboBox;
+	QLabel* m_serialBaudrateLabel;
+	QComboBox* m_serialBaudrateComboBox;
+	QCheckBox* m_RS422Termination;
 
+	//digital inputs设置组
+	QGroupBox* m_digitalInputsGroupBox;
+	QLabel* m_inputsModeLabel;
+	QComboBox* m_inputsModeComboBox;
+	QLabel* m_inputsLogicLabel;
+	QComboBox* m_inputsLogicComboBox;
+
+	//trigger 设置组
+	QGroupBox* m_triggerGroupBox;
+	QLabel* m_triggerModeLabel;
+	QComboBox* m_triggerModeComboBox;
+	QLabel* m_triggerSourceLabel;
+	QComboBox* m_triggerSourceComboBox;
+	QLabel* m_encodeStepLabel;
+	QSpinBox* m_encodeStepSpinBox;
+	QCheckBox* m_encodeActiveCBox;
+	
 };

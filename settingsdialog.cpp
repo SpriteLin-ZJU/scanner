@@ -7,12 +7,15 @@
 #include <QComboBox>
 #include <QTabWidget>
 #include <QWidget>
+#include <QSpinBox>
+
 SettingsDialog::SettingsDialog(QWidget* parent)
 	: QDialog(parent)
 {
 	m_settingTabWidget = new QTabWidget(this);
 	m_settingTabWidget->addTab(createGeneralTabWidget(), tr("General"));
-	
+	m_settingTabWidget->addTab(createInterfaceTabWidget(), tr("Interface"));
+
 	QVBoxLayout* mainLayout = new QVBoxLayout;
 	mainLayout->addWidget(m_settingTabWidget);
 	setLayout(mainLayout);
@@ -25,9 +28,9 @@ void SettingsDialog::readSettings()
 QWidget * SettingsDialog::createGeneralTabWidget()
 {
 	//创建快门时间设置框
-	m_shutterTimeLabel = new QLabel(tr("Shutter time:"), this);
+	m_shutterTimeLabel = new QLabel(tr("Shutter time: "), this);
 	m_shutterTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-	m_idleTimeLabel = new QLabel(tr("Idle time:"), this);
+	m_idleTimeLabel = new QLabel(tr("Idle time: "), this);
 	m_idleTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 	m_shutterTime = new QLineEdit(this);
 	m_idleTime = new QLineEdit(this);
@@ -109,4 +112,85 @@ QWidget * SettingsDialog::createGeneralTabWidget()
 	generalTab->setLayout(layoutGeneralTabWidget);
 	
 	return generalTab;
+}
+
+QWidget * SettingsDialog::createInterfaceTabWidget()
+{
+	//设置RS422接口设置组
+	m_RS422GroupBox = new QGroupBox(tr("RS422"), this);
+	m_RS422ModeLabel = new QLabel(tr("RS422 mode: "), this);
+	m_RS422ModeComboBox = new QComboBox(this);
+	QStringList list;
+	list << "serial" << "ext. trigger input" << "ext. trigger output";
+	m_RS422ModeComboBox->addItems(list);
+	m_serialBaudrateLabel = new QLabel(tr("Serial baudrate: "), this);
+	m_serialBaudrateComboBox = new QComboBox(this);
+	list.clear();
+	list << "9600" << "19200" << "38400" << "57600" << "115200";
+	m_serialBaudrateComboBox->addItems(list);
+	m_RS422Termination = new QCheckBox(tr("No RS422 termination"),this);
+	//设置RS422接口设置组布局
+	QGridLayout* RS422GridLayout = new QGridLayout;
+	RS422GridLayout->addWidget(m_RS422ModeLabel, 0, 0, 1, 1);
+	RS422GridLayout->addWidget(m_RS422ModeComboBox, 0, 1, 1, 1);
+	RS422GridLayout->addWidget(m_serialBaudrateLabel, 0, 2, 1, 1);
+	RS422GridLayout->addWidget(m_serialBaudrateComboBox, 0, 3, 1, 1);
+	RS422GridLayout->addWidget(m_RS422Termination);
+	m_RS422GroupBox->setLayout(RS422GridLayout);
+
+	//创建digital inputs设置组
+	m_digitalInputsGroupBox = new QGroupBox(tr("Digital inputs"), this);
+	m_inputsModeLabel = new QLabel(tr("Digital inputs mode: "), this);
+	m_inputsModeComboBox = new QComboBox(this);
+	list.clear();
+	list << "encoder + reset" << "encode + trigger" << "trigger" << "user modes + trigger" << "user modes" << "timestamp";
+	m_inputsModeComboBox->addItems(list);
+	m_inputsLogicLabel = new QLabel(tr("Digital inputs logic: "), this);
+	m_inputsLogicComboBox = new QComboBox(this);
+	list.clear();
+	list << "low level logic(5V)" << "high level logic(24V)";
+	m_inputsLogicComboBox->addItems(list);
+	//设置digital inputs布局
+	QHBoxLayout* digitalInputsLayout = new QHBoxLayout;
+	digitalInputsLayout->addWidget(m_inputsModeLabel);
+	digitalInputsLayout->addWidget(m_inputsModeComboBox);
+	digitalInputsLayout->addWidget(m_inputsLogicLabel);
+	digitalInputsLayout->addWidget(m_inputsLogicComboBox);
+	m_digitalInputsGroupBox->setLayout(digitalInputsLayout);
+
+	//设置trigger
+	m_triggerGroupBox = new QGroupBox(tr("Trigger"), this);
+	m_triggerModeLabel = new QLabel(tr("Trigger Mode"), this);
+	m_triggerModeComboBox = new QComboBox(this);
+	list.clear();
+	list << "Encoder" << "internal" << "pos. edge" << "neg. edge" << "pos. pulse" << "neg. pulse" << "pos. gate" << "neg. gate";
+	m_triggerModeComboBox->addItems(list);
+	m_triggerSourceLabel = new QLabel(tr("Trigger source: "), this);
+	m_triggerSourceComboBox = new QComboBox(this);
+	m_triggerSourceComboBox->addItem("RS422");
+	m_triggerSourceComboBox->addItem("digital inputs");
+	m_encodeStepLabel = new QLabel(tr("Encode step: "), this);
+	m_encodeStepSpinBox = new QSpinBox(this);
+	m_encodeStepSpinBox->setRange(1, 100);
+	m_encodeStepSpinBox->setSingleStep(1);
+	m_encodeActiveCBox = new QCheckBox(tr("Encode active"), this);
+	QGridLayout* triggerGridLayout = new QGridLayout;
+	triggerGridLayout->addWidget(m_triggerModeLabel,0,0,1,1);
+	triggerGridLayout->addWidget(m_triggerModeComboBox, 0, 1, 1, 1);
+	triggerGridLayout->addWidget(m_triggerSourceLabel, 0, 2, 1, 1);
+	triggerGridLayout->addWidget(m_triggerSourceComboBox, 0, 3, 1, 1);
+	triggerGridLayout->addWidget(m_encodeStepLabel, 1, 0, 1, 1);
+	triggerGridLayout->addWidget(m_encodeStepSpinBox, 1, 1, 1, 1);
+	triggerGridLayout->addWidget(m_encodeActiveCBox, 1, 3, 1, 1);
+	m_triggerGroupBox->setLayout(triggerGridLayout);
+
+	QVBoxLayout* layoutInterfaceTabWidget = new QVBoxLayout;
+	layoutInterfaceTabWidget->addWidget(m_RS422GroupBox);
+	layoutInterfaceTabWidget->addWidget(m_digitalInputsGroupBox);
+	layoutInterfaceTabWidget->addWidget(m_triggerGroupBox);
+
+	QWidget* interfaceTab = new QWidget(this);
+	interfaceTab->setLayout(layoutInterfaceTabWidget);
+
+	return interfaceTab;
 }
