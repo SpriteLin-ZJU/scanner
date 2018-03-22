@@ -1,6 +1,5 @@
 #pragma once
 #include "InterfaceLLT_2.h"
-#include <QtGui>
 #include <QWidget>
 
 class QLabel;
@@ -14,7 +13,7 @@ class ScannerBox : public QWidget
 	Q_OBJECT
 public:
 	ScannerBox(QWidget *parent = Q_NULLPTR);
-
+	~ScannerBox();
 private:
 	void ipSearch();
 	void scanConnect();

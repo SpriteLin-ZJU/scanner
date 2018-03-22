@@ -58,6 +58,11 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	connect(m_advancedSettings, &QPushButton::clicked, this, &ScannerBox::advancedSettings);
 }
 
+ScannerBox::~ScannerBox()
+{
+	delete m_scanner;
+}
+
 void ScannerBox::ipSearch()
 {
 	//搜索连接至电脑的IP地址
@@ -125,7 +130,7 @@ void ScannerBox::advancedSettings()
 {
 	SettingsDialog settingDialog(this);
 	if (settingDialog.exec()) {
-
+		settingDialog.writeSettings();
 	}
 }
 

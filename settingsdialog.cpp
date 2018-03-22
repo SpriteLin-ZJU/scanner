@@ -8,21 +8,53 @@
 #include <QTabWidget>
 #include <QWidget>
 #include <QSpinBox>
+#include <QPushButton>
+#include <QSettings>
 
 SettingsDialog::SettingsDialog(QWidget* parent)
 	: QDialog(parent)
 {
+	//创建对话框TAB标签页
 	m_settingTabWidget = new QTabWidget(this);
 	m_settingTabWidget->addTab(createGeneralTabWidget(), tr("General"));
 	m_settingTabWidget->addTab(createInterfaceTabWidget(), tr("Interface"));
-
+	//创建按钮
+	m_okButton = new QPushButton(tr("ok"), this);
+	m_cancelButton = new QPushButton(tr("cancel"), this);
+	//创建布局
+	QHBoxLayout* buttonLayout = new QHBoxLayout;
+	buttonLayout->addStretch();
+	buttonLayout->addWidget(m_okButton);
+	buttonLayout->addWidget(m_cancelButton);
 	QVBoxLayout* mainLayout = new QVBoxLayout;
 	mainLayout->addWidget(m_settingTabWidget);
+	mainLayout->addLayout(buttonLayout);
 	setLayout(mainLayout);
+
+	//读取之前保存的设置
+	readSettings();
+	//创建信号槽
+	connect(m_okButton, &QPushButton::clicked, this, &QDialog::accept);
+	connect(m_cancelButton, &QPushButton::clicked, this, &QDialog::reject);
+
 }
 
 void SettingsDialog::readSettings()
 {
+	QSettings settings("ZJU", "scanner");
+	//第一次创建注册表
+	if (!settings.contains("shutterTime"))
+		return;
+	//读取参数
+	m_shutterTime->setValue(settings.value("shutterTime").toInt());
+	m_idleTime->setValue(settings.value("idleTime").toInt());
+}
+
+void SettingsDialog::writeSettings()
+{
+	QSettings settings("ZJU", "scanner");
+	settings.setValue("shutterTime", m_shutterTime->value());
+	settings.setValue("idleTime", m_idleTime->value());
 }
 
 QWidget * SettingsDialog::createGeneralTabWidget()
@@ -32,14 +64,24 @@ QWidget * SettingsDialog::createGeneralTabWidget()
 	m_shutterTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 	m_idleTimeLabel = new QLabel(tr("Idle time: "), this);
 	m_idleTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-	m_shutterTime = new QLineEdit(this);
-	m_idleTime = new QLineEdit(this);
+	m_shutterTime = new QSpinBox(this);
+	m_shutterTime->setSingleStep(1);
+	m_shutterTime->setRange(1, 1000);
+	m_shutterTime->setSuffix(" ms");
+	m_shutterTime->setAlignment(Qt::AlignRight);
+	m_idleTime = new QSpinBox(this);
+	m_idleTime->setSingleStep(1);
+	m_idleTime->setRange(1, 1000);
+	m_idleTime->setSuffix(" ms");
+	m_idleTime->setAlignment(Qt::AlignRight);
 	m_shutterGroupBox = new QGroupBox(tr("ShutterTime"), this);
 	//创建快门时间设置框布局
 	QHBoxLayout *shutterGroupLayout = new QHBoxLayout;
 	shutterGroupLayout->addWidget(m_shutterTimeLabel);
+	shutterGroupLayout->addStretch();
 	shutterGroupLayout->addWidget(m_shutterTime);
 	shutterGroupLayout->addWidget(m_idleTimeLabel);
+	shutterGroupLayout->addStretch();
 	shutterGroupLayout->addWidget(m_idleTime);
 	m_shutterGroupBox->setLayout(shutterGroupLayout);
 
@@ -173,6 +215,7 @@ QWidget * SettingsDialog::createInterfaceTabWidget()
 	m_encodeStepSpinBox = new QSpinBox(this);
 	m_encodeStepSpinBox->setRange(1, 100);
 	m_encodeStepSpinBox->setSingleStep(1);
+	m_encodeStepSpinBox->setAlignment(Qt::AlignRight);
 	m_encodeActiveCBox = new QCheckBox(tr("Encode active"), this);
 	QGridLayout* triggerGridLayout = new QGridLayout;
 	triggerGridLayout->addWidget(m_triggerModeLabel,0,0,1,1);

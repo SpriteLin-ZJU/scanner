@@ -17,18 +17,21 @@ class SettingsDialog : public QDialog
 public:
 	SettingsDialog(QWidget* parent = 0);
 
-private:
 	void readSettings();
+	void writeSettings();
+private:
 	QWidget* createGeneralTabWidget();
 	QWidget* createInterfaceTabWidget();
 
 	QTabWidget* m_settingTabWidget;
+	QPushButton* m_okButton;
+	QPushButton* m_cancelButton;
 	//快门设置组
 	QGroupBox * m_shutterGroupBox;
 	QLabel* m_shutterTimeLabel;
 	QLabel* m_idleTimeLabel;
-	QLineEdit* m_shutterTime;
-	QLineEdit* m_idleTime;
+	QSpinBox* m_shutterTime;
+	QSpinBox* m_idleTime;
 
 	//测量区域、分辨率设置组
 	QGroupBox* m_profileGroupBox;
