@@ -23,25 +23,28 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	m_advancedSettings->setDisabled(false);
 	
 	//布局
-	QVBoxLayout *typeLayout = new QVBoxLayout;
-	typeLayout->addWidget(m_scanType);
-	typeLayout->addStretch();
+	QHBoxLayout* hBoxLayout1 = new QHBoxLayout;
+	hBoxLayout1->addWidget(m_ipLabel);
+	hBoxLayout1->addWidget(m_ipComboBox);
+	hBoxLayout1->addWidget(m_ipSearch);
+	QHBoxLayout* hBoxLayout2 = new QHBoxLayout;
+	hBoxLayout2->addWidget(m_scanType);
+	hBoxLayout2->addStretch();
+	hBoxLayout2->addWidget(m_scanConnect);
+	QHBoxLayout* hBoxLayout3 = new QHBoxLayout;
+	hBoxLayout3->addStretch();
+	hBoxLayout3->addWidget(m_advancedSettings);
+	QVBoxLayout* groupVLayout = new QVBoxLayout;
+	groupVLayout->addLayout(hBoxLayout1);
+	groupVLayout->addLayout(hBoxLayout2);
+	groupVLayout->addLayout(hBoxLayout3);
+	m_scanGroupBox->setLayout(groupVLayout);
 
-	QGridLayout *leftLayout = new QGridLayout;
-	leftLayout->addWidget(m_ipLabel, 0, 0);
-	leftLayout->addWidget(m_ipComboBox, 0, 1);
-	leftLayout->addLayout(typeLayout, 1, 0,1,2);
-	
-	QVBoxLayout *rightLayout = new QVBoxLayout;
-	rightLayout->addWidget(m_ipSearch);
-	rightLayout->addWidget(m_scanConnect);
-	rightLayout->addWidget(m_advancedSettings);
+	QHBoxLayout* mainLayout = new QHBoxLayout;
+	mainLayout->addWidget(m_scanGroupBox);
 
-	QHBoxLayout *mainLayout = new QHBoxLayout;
-	mainLayout->addLayout(leftLayout);
-	mainLayout->addLayout(rightLayout);
+	setLayout(mainLayout);
 	
-	m_scanGroupBox->setLayout(mainLayout);
 
 	//创建传感器接口
 	m_scanner = new CInterfaceLLT("LLT.dll", &m_bLoadError);

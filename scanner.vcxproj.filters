@@ -48,6 +48,12 @@
     <ClCompile Include="settingsdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="graphbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="graphmodifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -57,6 +63,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="settingsdialog.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="graphbox.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="graphmodifier.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

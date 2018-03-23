@@ -1,9 +1,13 @@
-#include "mainwindow.h"
+#include "graphbox.h"
 #include "scannerbox.h"
+#include "mainwindow.h"
+
 #include <QAction>
 #include <QMenuBar>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QLayout>
+#include <QScreen>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -11,8 +15,27 @@ MainWindow::MainWindow(QWidget *parent)
 	createActions();
 	createMenus();
 
+	Q3DSurface* graph = new Q3DSurface();
+	QWidget* container = QWidget::createWindowContainer(graph);
+	QSize screenSize = graph->screen()->size();
+	container->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
+	container->setMaximumSize(screenSize);
+	container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	container->setFocusPolicy(Qt::StrongFocus);
+
 	m_scannerBox = new ScannerBox(this);
-	setCentralWidget(m_scannerBox);
+	m_graphBox = new GraphBox(graph, this);
+	
+	QWidget* widget = new QWidget;
+	QVBoxLayout* vlayout = new QVBoxLayout;
+	vlayout->addWidget(m_scannerBox);
+	vlayout->addWidget(m_graphBox);
+	vlayout->addStretch();
+	QHBoxLayout* hlayout = new QHBoxLayout;
+	hlayout->addLayout(vlayout);
+	hlayout->addWidget(container, 1);
+	widget->setLayout(hlayout);
+	setCentralWidget(widget);
 }
 
 void MainWindow::createActions()
