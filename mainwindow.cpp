@@ -86,6 +86,7 @@ void MainWindow::createStatusBar()
 
 void MainWindow::loadProfile()
 {
+
 }
 
 void MainWindow::saveProfile()
