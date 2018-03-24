@@ -14,13 +14,16 @@ class ScannerBox : public QWidget
 public:
 	ScannerBox(QWidget *parent = Q_NULLPTR);
 	~ScannerBox();
+signals:
+	void updateStatus(QString& );
 private:
 	void ipSearch();
 	void scanConnect();
 	void advancedSettings();
+	void writeScannerSettings();
+	void OnError(QString errorText);
 	void OnError(QString errorText, int errorValue);
 
-	
 	QGroupBox* m_scanGroupBox;
 	QLabel* m_ipLabel;
 	QComboBox* m_ipComboBox;

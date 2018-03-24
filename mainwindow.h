@@ -3,7 +3,7 @@
 
 class ScannerBox;
 class GraphBox;
-
+class QLabel;
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -18,7 +18,9 @@ private:
 	void createStatusBar();
 	void loadProfile();
 	void saveProfile();
+	void updateStatusBar(QString& status);
 
+	QLabel* m_statusLabel;
 	QAction* m_loadAction;
 	QAction* m_saveAction;
 	QAction* m_exitAction;

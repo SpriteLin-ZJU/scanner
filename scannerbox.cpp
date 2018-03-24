@@ -6,6 +6,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QComboBox>
+#include <QSettings>
 
 ScannerBox::ScannerBox(QWidget *parent) :
 	QWidget(parent)
@@ -134,10 +135,34 @@ void ScannerBox::advancedSettings()
 	SettingsDialog settingDialog(this);
 	if (settingDialog.exec()) {
 		settingDialog.writeSettings();
+		writeScannerSettings();
 	}
+}
+
+void ScannerBox::writeScannerSettings()
+{
+	QSettings settings("ZJU", "scanner");
+	//设置分辨率
+	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toInt());
+	if (m_iRetValue != GENERAL_FUNCTION_OK) {
+		OnError("Error during SetFeature(FEATURE_FUNCTION_TRIGGER)", m_iRetValue);
+		return;
+	}
+	//设置trigger模式
+
 }
 
 void ScannerBox::OnError(QString errorText, int errorValue)
 {
+	char acErrorString[200];
+	if (m_scanner->TranslateErrorValue(errorValue, acErrorString, sizeof(acErrorString)) >= GENERAL_FUNCTION_OK) {
+		QString s = errorText + ":" + acErrorString;
+		emit updateStatus(s);
+		return;
+	}
+}
 
+void ScannerBox::OnError(QString errorText)
+{
+	emit updateStatus(errorText);
 }

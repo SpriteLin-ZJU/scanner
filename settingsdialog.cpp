@@ -48,6 +48,7 @@ void SettingsDialog::readSettings()
 	//¶ÁÈ¡²ÎÊý
 	m_shutterTime->setValue(settings.value("shutterTime").toInt());
 	m_idleTime->setValue(settings.value("idleTime").toInt());
+	m_resolutionComBox->setCurrentIndex(m_resolutionComBox->findText(settings.value("resolution").toString()));
 }
 
 void SettingsDialog::writeSettings()
@@ -55,6 +56,7 @@ void SettingsDialog::writeSettings()
 	QSettings settings("ZJU", "scanner");
 	settings.setValue("shutterTime", m_shutterTime->value());
 	settings.setValue("idleTime", m_idleTime->value());
+	settings.setValue("resolution", m_resolutionComBox->currentText().toInt());
 }
 
 QWidget * SettingsDialog::createGeneralTabWidget()

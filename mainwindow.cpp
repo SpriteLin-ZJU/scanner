@@ -8,12 +8,14 @@
 #include <QToolBar>
 #include <QLayout>
 #include <QScreen>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
 	createActions();
 	createMenus();
+	createStatusBar();
 
 	Q3DSurface* graph = new Q3DSurface();
 	QWidget* container = QWidget::createWindowContainer(graph);
@@ -36,6 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
 	hlayout->addWidget(container, 1);
 	widget->setLayout(hlayout);
 	setCentralWidget(widget);
+
+	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 }
 
 void MainWindow::createActions()
@@ -76,6 +80,8 @@ void MainWindow::createToolBars()
 
 void MainWindow::createStatusBar()
 {
+	m_statusLabel = new QLabel(tr("No Scanner connect"));
+	statusBar()->addWidget(m_statusLabel);
 }
 
 void MainWindow::loadProfile()
@@ -84,6 +90,11 @@ void MainWindow::loadProfile()
 
 void MainWindow::saveProfile()
 {
+}
+
+void MainWindow::updateStatusBar(QString & status)
+{
+	m_statusLabel->setText(status);
 }
 
 
