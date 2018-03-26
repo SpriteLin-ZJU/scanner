@@ -8,6 +8,8 @@
 #include <QComboBox>
 #include <QSettings>
 
+std::vector<unsigned char> vucProfileBuffer;
+
 ScannerBox::ScannerBox(QWidget *parent) :
 	QWidget(parent)
 {
@@ -22,7 +24,9 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	m_scanConnect = new QPushButton(tr("Connect"),this);
 	m_advancedSettings = new QPushButton(tr("Advanced"),this);
 	m_advancedSettings->setDisabled(false);
-	
+	m_transButton = new QPushButton(tr("Start"), this);
+	m_transButton->setDisabled(true);
+
 	//布局
 	QHBoxLayout* hBoxLayout1 = new QHBoxLayout;
 	hBoxLayout1->addWidget(m_ipLabel);
@@ -33,7 +37,7 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	hBoxLayout2->addStretch();
 	hBoxLayout2->addWidget(m_scanConnect);
 	QHBoxLayout* hBoxLayout3 = new QHBoxLayout;
-	hBoxLayout3->addStretch();
+	hBoxLayout3->addWidget(m_transButton);
 	hBoxLayout3->addWidget(m_advancedSettings);
 	QVBoxLayout* groupVLayout = new QVBoxLayout;
 	groupVLayout->addLayout(hBoxLayout1);
@@ -60,10 +64,12 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	connect(m_ipSearch, &QPushButton::clicked, this, &ScannerBox::ipSearch);
 	connect(m_scanConnect, &QPushButton::clicked, this, &ScannerBox::scanConnect);
 	connect(m_advancedSettings, &QPushButton::clicked, this, &ScannerBox::advancedSettings);
+	connect(m_transButton, &QPushButton::clicked, this, &ScannerBox::changeProfileTrans);
 }
 
 ScannerBox::~ScannerBox()
 {
+	m_scanner->Disconnect();
 	delete m_scanner;
 }
 
@@ -86,6 +92,7 @@ void ScannerBox::ipSearch()
 	else
 		m_uiInterfaceCount = m_iRetValue;
 
+	OnError("Search OK");
 	for (int i = 0; i < m_uiInterfaceCount; i++) {
 		QString s = QString::number(m_vuiInterfaces[i], 16).toUpper();
 		m_ipComboBox->addItem(s);
@@ -101,14 +108,16 @@ void ScannerBox::scanConnect()
 	m_iRetValue = m_scanner->SetDeviceInterface(m_vuiInterfaces[index], 0);
 	m_iRetValue = m_scanner->Connect();
 
-	if (m_iRetValue != GENERAL_FUNCTION_OK) {
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during connect", m_iRetValue);
 		return;
 	}
+	else
+		OnError("Connected");
 
 	//获取设备型号
 	m_iRetValue = m_scanner->GetLLTType(&m_tscanCONTROLType);
-	if (m_iRetValue!=GENERAL_FUNCTION_OK)
+	if (m_iRetValue < GENERAL_FUNCTION_OK)
 	{
 		OnError("Error during GetLLTType", m_iRetValue);
 		return;
@@ -127,7 +136,11 @@ void ScannerBox::scanConnect()
 	QString s = "Type:	" + scanCRONTROLType;
 	
 	m_scanType->setText(s);
+
+	//写入传感器设置
+	writeScannerSettings();
 	m_advancedSettings->setEnabled(true);
+	m_transButton->setEnabled(true);
 }
 
 void ScannerBox::advancedSettings()
@@ -144,11 +157,75 @@ void ScannerBox::writeScannerSettings()
 	QSettings settings("ZJU", "scanner");
 	//设置分辨率
 	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toInt());
-	if (m_iRetValue != GENERAL_FUNCTION_OK) {
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_TRIGGER)", m_iRetValue);
 		return;
 	}
 	//设置trigger模式
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_TRIGGER, 0x00000000);
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error duiring SetFeature(FEATURE_FUNCTION_TRIGGER)", m_iRetValue);
+		return;
+	}
+	//设置Profile格式
+	m_iRetValue = m_scanner->SetProfileConfig(CONTAINER);
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during SetProfileConfig", m_iRetValue);
+		return;
+	}
+	//设置shutter time
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, settings.value("shutterTime").toInt());
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during SetFeature(FEATURE_FUNCTION_SHUTTERTIME)", m_iRetValue);
+		return;
+	}
+	//设置idle time
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, settings.value("idleTime").toInt());
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during SetFeature(FEATURE_FUNCTION_IDLETIME)", m_iRetValue);
+		return;
+	}
+	//登记回调函数
+	m_iRetValue = m_scanner->RegisterCallback(STD_CALL, (void*)NewProfile, 0);
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during RegisterCallback", m_iRetValue);
+		return;
+	}
+}
+
+//改变传输状态
+void ScannerBox::changeProfileTrans()
+{
+	if (m_transButton->text() == "Start")
+		startProfileTrans();
+	else if (m_transButton->text() == "Stop")
+		stopProfileTrans();
+}
+
+
+void ScannerBox::startProfileTrans()
+{
+	//首先清空之前数据
+	vucProfileBuffer.clear();
+
+	m_iRetValue = m_scanner->TransferProfiles(NORMAL_TRANSFER, true);
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during TransferProfiles", m_iRetValue);
+		return;
+	}
+	m_transButton->setText(tr("Stop"));
+	Sleep(100);		//warm up
+}
+
+void ScannerBox::stopProfileTrans()
+{
+	m_iRetValue = m_scanner->TransferProfiles(NORMAL_TRANSFER, false);
+	if (m_iRetValue < GENERAL_FUNCTION_OK) {
+		OnError("Error during TransferProfiles", m_iRetValue);
+		return;
+	}
+	
+	//处理接收到的数据
 
 }
 
@@ -165,4 +242,10 @@ void ScannerBox::OnError(QString errorText, int errorValue)
 void ScannerBox::OnError(QString errorText)
 {
 	emit updateStatus(errorText);
+}
+
+//回调函数
+void __stdcall NewProfile(const unsigned char* pucData, unsigned int uiSize, void* pUserData)
+{
+	vucProfileBuffer.insert(vucProfileBuffer.end(), pucData, pucData + uiSize);
 }

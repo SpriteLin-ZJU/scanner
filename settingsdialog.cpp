@@ -57,6 +57,8 @@ void SettingsDialog::writeSettings()
 	settings.setValue("shutterTime", m_shutterTime->value());
 	settings.setValue("idleTime", m_idleTime->value());
 	settings.setValue("resolution", m_resolutionComBox->currentText().toInt());
+	
+	settings.sync();
 }
 
 QWidget * SettingsDialog::createGeneralTabWidget()

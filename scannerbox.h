@@ -8,12 +8,18 @@ class QComboBox;
 class QGroupBox;
 class QPushButton;
 
+extern void __stdcall NewProfile(const unsigned char* pucData, unsigned int uiSize, void* pUserData);
+extern 	std::vector<unsigned char> vucProfileBuffer;
+
 class ScannerBox : public QWidget
 {
 	Q_OBJECT
 public:
 	ScannerBox(QWidget *parent = Q_NULLPTR);
 	~ScannerBox();
+	
+	void startProfileTrans();
+	void stopProfileTrans();
 signals:
 	void updateStatus(QString& );
 private:
@@ -21,6 +27,8 @@ private:
 	void scanConnect();
 	void advancedSettings();
 	void writeScannerSettings();
+	void changeProfileTrans();
+
 	void OnError(QString errorText);
 	void OnError(QString errorText, int errorValue);
 
@@ -32,6 +40,7 @@ private:
 	QPushButton* m_ipSearch;
 	QPushButton* m_scanConnect;
 	QPushButton* m_advancedSettings;
+	QPushButton* m_transButton;
 	
 	//传感器接口
 	CInterfaceLLT* m_scanner;
