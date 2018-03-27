@@ -6,7 +6,8 @@
 #include <QWidget>
 
 class QSlider;
-
+extern std::vector<double>vdValueX;
+extern std::vector<double>vdValueZ;
 using namespace QtDataVisualization;
 
 class GraphModifier :public QObject
@@ -40,6 +41,9 @@ public:
 	//设置坐标系参数
 	void createAxisSettings();
 
+	//绘制
+	void updateGraph(unsigned int resolution);
+
 	void adjustXMin(int min);
 	void adjustXMax(int max);
 	void adjustZMin(int min);
@@ -50,6 +54,8 @@ private:
 	Q3DSurface * m_graph;
 	QSurfaceDataProxy* m_scanDataProxy;
 	QSurface3DSeries* m_scanDataSeries;
+	QSurfaceDataArray* m_dataArray;
+	QSurfaceDataRow* m_newRow;
 
 	QSlider *m_axisMinSliderX;
 	QSlider *m_axisMaxSliderX;

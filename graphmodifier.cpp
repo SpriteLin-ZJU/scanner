@@ -4,6 +4,8 @@ GraphModifier::GraphModifier(Q3DSurface* graph)
 	:m_graph(graph)
 {
 	createAxisSettings();
+	m_dataArray=new QSurfaceDataArray;
+	m_newRow = new QSurfaceDataRow;
 }
 
 GraphModifier::~GraphModifier()
@@ -35,18 +37,41 @@ void GraphModifier::createAxisSettings()
 	m_scanDataSeries->setDrawMode(QSurface3DSeries::DrawSurfaceAndWireframe);
 	m_scanDataSeries->setItemLabelFormat(QStringLiteral("x: @xLabel ,y: @zLabel ,z: @yLabel"));	//Qt默认Y轴朝上
 	
-																								//设置坐标参数
+	m_graph->addSeries(m_scanDataSeries);
+
+	//设置坐标参数
 	m_graph->axisX()->setLabelFormat("%.2f mm");
 	m_graph->axisY()->setLabelFormat("%.2f mm");
 	m_graph->axisZ()->setLabelFormat("%.2f mm");
 	
-	m_graph->axisX()->setRange(-30.0f, 30.0f);
-	m_graph->axisY()->setRange(0.0f, 50.0f);
-	m_graph->axisZ()->setRange(0.0f, 100.0f);
+	//m_graph->axisX()->setRange(-30.0f, 30.0f);
+	//m_graph->axisY()->setRange(0.0f, 50.0f);
+	//m_graph->axisZ()->setRange(0.0f, 100.0f);
 
 	m_graph->axisX()->setLabelAutoRotation(30);
 	m_graph->axisY()->setLabelAutoRotation(90);
 	m_graph->axisZ()->setLabelAutoRotation(30);
 
 
+}
+
+void GraphModifier::updateGraph(unsigned int resolution)
+{
+	m_dataArray->clear();
+	m_newRow->resize(resolution);
+
+	//存入数据
+	int profileCount = vdValueX.size() / resolution;
+	for (int i = 0; i < profileCount; i++) {
+		for (int j = 0; j < resolution; j++) {
+			float x = (float)i;
+			float y = (float)vdValueZ[i*resolution + j];
+			float z = (float)vdValueX[i*resolution + j];
+			(*m_newRow)[j].setPosition(QVector3D(x, y, z));
+		}
+		*m_dataArray << m_newRow;
+	}
+
+	//m_scanDataProxy->resetArray(NULL);
+	m_scanDataProxy->resetArray(m_dataArray);
 }

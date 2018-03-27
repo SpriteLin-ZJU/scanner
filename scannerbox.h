@@ -22,6 +22,7 @@ public:
 	void stopProfileTrans();
 signals:
 	void updateStatus(QString& );
+	void updateGraph(unsigned int);
 private:
 	void ipSearch();
 	void scanConnect();

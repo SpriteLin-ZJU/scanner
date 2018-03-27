@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
 	setCentralWidget(widget);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
+	connect(m_scannerBox, &ScannerBox::updateGraph, m_graphBox, &GraphBox::updateGraph);
 }
 
 void MainWindow::createActions()

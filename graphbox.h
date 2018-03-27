@@ -11,6 +11,10 @@ class GraphBox : public QWidget
 	Q_OBJECT
 public:
 	GraphBox(Q3DSurface *graph,QWidget *parent = Q_NULLPTR);
+
+	void updateGraph(unsigned int resolution) {
+		m_modifier->updateGraph(resolution);
+	}
 private:
 	GraphModifier * m_modifier;
 	//切面选择对话框

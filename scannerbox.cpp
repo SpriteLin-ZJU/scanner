@@ -9,6 +9,8 @@
 #include <QSettings>
 
 std::vector<unsigned char> vucProfileBuffer;
+std::vector<double>vdValueX;
+std::vector<double>vdValueZ;
 
 ScannerBox::ScannerBox(QWidget *parent) :
 	QWidget(parent)
@@ -224,10 +226,23 @@ void ScannerBox::stopProfileTrans()
 		OnError("Error during TransferProfiles", m_iRetValue);
 		return;
 	}
-	
-	//处理接收到的数据
 
+	m_transButton->setText(tr("Start"));
+
+	//处理接收到的数据
+	vdValueX.clear();
+	vdValueZ.clear();
+	m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[0], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL,
+		NULL, NULL, &vdValueX[0], &vdValueZ[0], NULL, NULL);
+	if (((m_iRetValue & CONVERT_X) == 0) || ((m_iRetValue & CONVERT_Z) == 0))
+	{
+		OnError("Error during Converting of profile data", m_iRetValue);
+		return;
+	}
+	//更新图像
+	emit updateGraph(m_uiResolution);
 }
+
 
 void ScannerBox::OnError(QString errorText, int errorValue)
 {
