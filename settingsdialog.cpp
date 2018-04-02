@@ -46,8 +46,8 @@ void SettingsDialog::readSettings()
 	if (!settings.contains("shutterTime"))
 		return;
 	//读取参数
-	m_shutterTime->setValue(settings.value("shutterTime").toInt());
-	m_idleTime->setValue(settings.value("idleTime").toInt());
+	m_shutterTime->setValue(settings.value("shutterTime").toUInt());
+	m_idleTime->setValue(settings.value("idleTime").toUInt());
 	m_resolutionComBox->setCurrentIndex(m_resolutionComBox->findText(settings.value("resolution").toString()));
 }
 
@@ -56,7 +56,7 @@ void SettingsDialog::writeSettings()
 	QSettings settings("ZJU", "scanner");
 	settings.setValue("shutterTime", m_shutterTime->value());
 	settings.setValue("idleTime", m_idleTime->value());
-	settings.setValue("resolution", m_resolutionComBox->currentText().toInt());
+	settings.setValue("resolution", m_resolutionComBox->currentText().toUInt());
 	
 	settings.sync();
 }
@@ -69,14 +69,14 @@ QWidget * SettingsDialog::createGeneralTabWidget()
 	m_idleTimeLabel = new QLabel(tr("Idle time: "), this);
 	m_idleTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 	m_shutterTime = new QSpinBox(this);
-	m_shutterTime->setSingleStep(1);
-	m_shutterTime->setRange(1, 1000);
-	m_shutterTime->setSuffix(" ms");
+	m_shutterTime->setSingleStep(10);
+	m_shutterTime->setRange(1, 2000);
+	m_shutterTime->setSuffix(" us");
 	m_shutterTime->setAlignment(Qt::AlignRight);
 	m_idleTime = new QSpinBox(this);
-	m_idleTime->setSingleStep(1);
-	m_idleTime->setRange(1, 1000);
-	m_idleTime->setSuffix(" ms");
+	m_idleTime->setSingleStep(10);
+	m_idleTime->setRange(1, 2000);
+	m_idleTime->setSuffix(" us");
 	m_idleTime->setAlignment(Qt::AlignRight);
 	m_shutterGroupBox = new QGroupBox(tr("ShutterTime"), this);
 	//创建快门时间设置框布局

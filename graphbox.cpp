@@ -9,7 +9,7 @@ GraphBox::GraphBox(Q3DSurface *graph, QWidget *parent)
 	:QWidget(parent)
 {
 	m_modifier = new GraphModifier(graph);
-	
+
 	//创建界面
 	m_selectionGroupBox = new QGroupBox(tr("Selection Mode"), this);
 
@@ -67,4 +67,13 @@ GraphBox::GraphBox(Q3DSurface *graph, QWidget *parent)
 	vLayout->addWidget(m_axisMaxSliderY);
 
 	setLayout(vLayout);
+	
+	m_modeItemRB->setChecked(true);
+
+	//建立信号槽
+	connect(m_modeNoneRB, &QRadioButton::toggled, m_modifier, &GraphModifier::toggleModeNone);
+	connect(m_modeItemRB, &QRadioButton::toggled, m_modifier, &GraphModifier::toggleModeItem);
+	connect(m_modeSliceRowRB, &QRadioButton::toggled, m_modifier, &GraphModifier::toggleModeSliceRow);
+	connect(m_modeSliceColumRB, &QRadioButton::toggled, m_modifier, &GraphModifier::toggleModeSliceColumn);
+
 }

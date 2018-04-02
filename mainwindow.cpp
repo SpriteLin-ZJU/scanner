@@ -1,7 +1,6 @@
 #include "graphbox.h"
 #include "scannerbox.h"
 #include "mainwindow.h"
-
 #include <QAction>
 #include <QMenuBar>
 #include <QStatusBar>

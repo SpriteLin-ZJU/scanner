@@ -3,6 +3,7 @@
 
 class ScannerBox;
 class GraphBox;
+class GLWidget;
 class QLabel;
 class MainWindow : public QMainWindow
 {
@@ -29,4 +30,5 @@ private:
 
 	ScannerBox* m_scannerBox;
 	GraphBox* m_graphBox;
+	GLWidget* m_glwidget;
 };

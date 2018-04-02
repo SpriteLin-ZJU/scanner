@@ -55,7 +55,7 @@ private:
 	QSurfaceDataProxy* m_scanDataProxy;
 	QSurface3DSeries* m_scanDataSeries;
 	QSurfaceDataArray* m_dataArray;
-	QSurfaceDataRow* m_newRow;
+	QSurfaceDataRow *m_newRow;
 
 	QSlider *m_axisMinSliderX;
 	QSlider *m_axisMaxSliderX;

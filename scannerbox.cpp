@@ -12,6 +12,19 @@ std::vector<unsigned char> vucProfileBuffer;
 std::vector<double>vdValueX;
 std::vector<double>vdValueZ;
 
+QString convertIP(unsigned int i)
+{
+	QString s;
+	s += QString::number((i >> 24) & 255,10);
+	s += ".";
+	s += QString::number((i >> 16) & 255, 10);
+	s += ".";
+	s += QString::number((i >> 8) & 255, 10);
+	s += ".";
+	s += QString::number(i & 255, 10);
+	return s;
+}
+
 ScannerBox::ScannerBox(QWidget *parent) :
 	QWidget(parent)
 {
@@ -32,7 +45,7 @@ ScannerBox::ScannerBox(QWidget *parent) :
 	//布局
 	QHBoxLayout* hBoxLayout1 = new QHBoxLayout;
 	hBoxLayout1->addWidget(m_ipLabel);
-	hBoxLayout1->addWidget(m_ipComboBox);
+	hBoxLayout1->addWidget(m_ipComboBox,1);
 	hBoxLayout1->addWidget(m_ipSearch);
 	QHBoxLayout* hBoxLayout2 = new QHBoxLayout;
 	hBoxLayout2->addWidget(m_scanType);
@@ -95,8 +108,9 @@ void ScannerBox::ipSearch()
 		m_uiInterfaceCount = m_iRetValue;
 
 	OnError("Search OK");
+	//转换为IP地址
 	for (int i = 0; i < m_uiInterfaceCount; i++) {
-		QString s = QString::number(m_vuiInterfaces[i], 16).toUpper();
+		QString s = convertIP(m_vuiInterfaces[i]);
 		m_ipComboBox->addItem(s);
 	}
 }
@@ -158,11 +172,13 @@ void ScannerBox::writeScannerSettings()
 {
 	QSettings settings("ZJU", "scanner");
 	//设置分辨率
-	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toInt());
+	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toUInt());
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_TRIGGER)", m_iRetValue);
 		return;
 	}
+	m_uiResolution = settings.value("resolution").toUInt();
+
 	//设置trigger模式
 	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_TRIGGER, 0x00000000);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
@@ -170,19 +186,19 @@ void ScannerBox::writeScannerSettings()
 		return;
 	}
 	//设置Profile格式
-	m_iRetValue = m_scanner->SetProfileConfig(CONTAINER);
+	m_iRetValue = m_scanner->SetProfileConfig(PROFILE);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetProfileConfig", m_iRetValue);
 		return;
 	}
 	//设置shutter time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, settings.value("shutterTime").toInt());
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, 100U);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_SHUTTERTIME)", m_iRetValue);
 		return;
 	}
 	//设置idle time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, settings.value("idleTime").toInt());
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, 900U);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_IDLETIME)", m_iRetValue);
 		return;
@@ -229,11 +245,18 @@ void ScannerBox::stopProfileTrans()
 
 	m_transButton->setText(tr("Start"));
 
-	//处理接收到的数据
+	//处理接收到的数据,分配向量所需大小
 	vdValueX.clear();
+	vdValueX.resize(vucProfileBuffer.size() / 64);
 	vdValueZ.clear();
-	m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[0], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL,
-		NULL, NULL, &vdValueX[0], &vdValueZ[0], NULL, NULL);
+	vdValueZ.resize(vucProfileBuffer.size() / 64);
+
+	for (int i = 0; i < vucProfileBuffer.size() / (64*m_uiResolution); i++) {
+		
+		m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[i*m_uiResolution*64], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL,
+			NULL, NULL, &vdValueX[i*m_uiResolution], &vdValueZ[i*m_uiResolution], NULL, NULL);
+	}
+	
 	if (((m_iRetValue & CONVERT_X) == 0) || ((m_iRetValue & CONVERT_Z) == 0))
 	{
 		OnError("Error during Converting of profile data", m_iRetValue);
@@ -262,5 +285,5 @@ void ScannerBox::OnError(QString errorText)
 //回调函数
 void __stdcall NewProfile(const unsigned char* pucData, unsigned int uiSize, void* pUserData)
 {
-	vucProfileBuffer.insert(vucProfileBuffer.end(), pucData, pucData + uiSize);
+	vucProfileBuffer.insert(vucProfileBuffer.end(), pucData, pucData + uiSize);	
 }

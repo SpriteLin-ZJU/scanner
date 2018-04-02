@@ -10,7 +10,7 @@ class GraphBox : public QWidget
 {
 	Q_OBJECT
 public:
-	GraphBox(Q3DSurface *graph,QWidget *parent = Q_NULLPTR);
+	GraphBox(Q3DSurface *graph, QWidget *parent = Q_NULLPTR);
 
 	void updateGraph(unsigned int resolution) {
 		m_modifier->updateGraph(resolution);
