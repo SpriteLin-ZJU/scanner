@@ -3,6 +3,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QOpenGLBuffer>
+#include <QOpenglVertexArrayObject>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
@@ -31,7 +32,10 @@ protected:
 	void paintGL() override;
 
 private:
+	QOpenGLVertexArrayObject m_vao;
 	QOpenGLBuffer m_vbo;
+	QOpenGLBuffer m_ebo;
+
 	QOpenGLShaderProgram* m_program;
 	void init_vbo(unsigned int resolution);
 
