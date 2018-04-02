@@ -51,9 +51,6 @@
     <ClCompile Include="graphbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphmodifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="glwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,9 +66,6 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="graphbox.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="graphmodifier.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="glwidget.h">

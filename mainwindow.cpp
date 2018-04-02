@@ -1,6 +1,8 @@
 #include "graphbox.h"
 #include "scannerbox.h"
 #include "mainwindow.h"
+#include "glwidget.h"
+
 #include <QAction>
 #include <QMenuBar>
 #include <QStatusBar>
@@ -16,17 +18,10 @@ MainWindow::MainWindow(QWidget *parent)
 	createMenus();
 	createStatusBar();
 
-	Q3DSurface* graph = new Q3DSurface();
-	QWidget* container = QWidget::createWindowContainer(graph);
-	QSize screenSize = graph->screen()->size();
-	container->setMinimumSize(QSize(screenSize.width() / 2, screenSize.height() / 1.6));
-	container->setMaximumSize(screenSize);
-	container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	container->setFocusPolicy(Qt::StrongFocus);
-
 	m_scannerBox = new ScannerBox(this);
-	m_graphBox = new GraphBox(graph, this);
-	
+	m_graphBox = new GraphBox(this);
+	m_glwidget = new GLWidget(this);
+
 	QWidget* widget = new QWidget;
 	QVBoxLayout* vlayout = new QVBoxLayout;
 	vlayout->addWidget(m_scannerBox);
@@ -34,12 +29,12 @@ MainWindow::MainWindow(QWidget *parent)
 	vlayout->addStretch();
 	QHBoxLayout* hlayout = new QHBoxLayout;
 	hlayout->addLayout(vlayout);
-	hlayout->addWidget(container, 1);
+	hlayout->addWidget(m_glwidget, 1);
 	widget->setLayout(hlayout);
 	setCentralWidget(widget);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
-	connect(m_scannerBox, &ScannerBox::updateGraph, m_graphBox, &GraphBox::updateGraph);
+	connect(m_scannerBox, &ScannerBox::updateGraph, m_glwidget, &GLWidget::updateGraph);
 }
 
 void MainWindow::createActions()

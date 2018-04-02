@@ -8,12 +8,7 @@
 GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), m_program(0)
 {
-	QSurfaceFormat format;
-	format.setDepthBufferSize(24);
-	format.setStencilBufferSize(8);
-	//format.setVersion(4, 3);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	setFormat(format);
+	
 }
 
 GLWidget::~GLWidget()
@@ -32,22 +27,23 @@ void GLWidget::cleanup()
 
 //顶点着色器
 static const char *vertexShaderSource =
-"attribute vec3 aPos;\n"
+"#version 430 core\n"
+"in vec3 aPos;\n"
 "void main() {\n"
 "    gl_Position = vec4(aPos,1.0);\n"
 "}\n";
 
 //片段着色器
 static const char *fragmentShaderSource =
+"#version 430 core\n"
+"out vec4 FragColor;\n"
 "void main() {\n"
-"   gl_FragColor = vec4(1.0,0.0,0.0,1.0);\n"
+"   FragColor = vec4(1.0,0.0,0.0,1.0);\n"
 "}\n";
 
 
 void GLWidget::initializeGL()
 {
-	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &GLWidget::cleanup);
-
 	initializeOpenGLFunctions();
 	glClearColor(0, 0, 0, 1);
 
@@ -57,7 +53,8 @@ void GLWidget::initializeGL()
 	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource))
 		return;
 	m_program->bindAttributeLocation("aPos", 0);
-	m_program->link();
+	if (!m_program->link())
+		return;
 
 	//创建顶点缓冲对象VBO
 	m_vbo.create();
