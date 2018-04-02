@@ -141,6 +141,7 @@
     <ClInclude Include="DllLoader.h" />
     <QtMoc Include="graphbox.h" />
     <QtMoc Include="graphmodifier.h" />
+    <QtMoc Include="glwidget.h" />
     <ClInclude Include="InterfaceLLT_2.h" />
     <QtMoc Include="scannerbox.h" />
     <QtMoc Include="settingsdialog.h" />

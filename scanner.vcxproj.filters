@@ -71,6 +71,9 @@
     <QtMoc Include="graphmodifier.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <QtMoc Include="glwidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mainwindow.ui">

@@ -7,6 +7,8 @@
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
 
+//test
+
 extern std::vector<double>vdValueX;
 extern std::vector<double>vdValueZ;
 
