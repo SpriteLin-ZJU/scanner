@@ -54,6 +54,9 @@
     <ClCompile Include="graphmodifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="glwidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
