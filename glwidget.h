@@ -4,6 +4,8 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLBuffer>
 #include <QOpenglVertexArrayObject>
+#include <QMatrix4x4>
+
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
@@ -20,7 +22,11 @@ public:
 	explicit GLWidget(QWidget *parent = Q_NULLPTR);
 	~GLWidget();
 
+	void setXRotation(int angle);
+	void setYRotation(int angle);
+	void setZRotation(int angle);
 	void cleanup();
+
 	void updateGraph(unsigned int resolution) {
 		init_vbo(resolution);
 		update();
@@ -31,12 +37,27 @@ protected:
 	void resizeGL(int width, int height) override;
 	void paintGL() override;
 
+	void mousePressEvent(QMouseEvent *event) override;
+	void mouseMoveEvent(QMouseEvent *event) override;
+
 private:
+	QOpenGLShaderProgram * m_program;
 	QOpenGLVertexArrayObject m_vao;
 	QOpenGLBuffer m_vbo;
 	QOpenGLBuffer m_ebo;
 
-	QOpenGLShaderProgram* m_program;
+	int m_xRot;
+	int m_yRot;
+	int m_zRot;
+	QPoint m_lastPos;
+	int m_projMatrixLoc;
+	int m_mvMatrixLoc;
+	int m_normalMatrixLoc;
+	int m_lightPosLoc;
+	QMatrix4x4 m_proj;
+	QMatrix4x4 m_camera;
+	QMatrix4x4 m_world;
+
 	void init_vbo(unsigned int resolution);
 
 	int m_profileCount;

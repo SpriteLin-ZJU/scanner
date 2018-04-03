@@ -90,7 +90,7 @@ ScannerBox::~ScannerBox()
 
 void ScannerBox::ipSearch()
 {
-	emit updateGraph(m_uiResolution);
+	//emit updateGraph(m_uiResolution);
 
 	//搜索连接至电脑的IP地址
 	//清空之前所储存的IP
