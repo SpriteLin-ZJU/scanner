@@ -51,15 +51,16 @@ private:
 	int m_zRot;
 	QPoint m_lastPos;
 	int m_projMatrixLoc;
-	int m_mvMatrixLoc;
+	int m_viewMatrixLoc;
+	int m_modelMatrixLoc;
 	int m_normalMatrixLoc;
 	int m_lightPosLoc;
 	QMatrix4x4 m_proj;
 	QMatrix4x4 m_camera;
-	QMatrix4x4 m_world;
+	QMatrix4x4 m_model;
 
 	void init_vbo(unsigned int resolution);
 
-	int m_profileCount;
-	unsigned int m_resolution;
+	int m_profileCount=1;
+	unsigned int m_resolution=3;
 };
