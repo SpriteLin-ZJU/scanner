@@ -46,6 +46,9 @@ private:
 	QOpenGLBuffer m_vbo;
 	QOpenGLBuffer m_ebo;
 
+	QOpenGLVertexArrayObject m_netVao;
+	QOpenGLBuffer m_netVbo;
+
 	int m_xRot;
 	int m_yRot;
 	int m_zRot;
@@ -53,6 +56,7 @@ private:
 	int m_projMatrixLoc;
 	int m_viewMatrixLoc;
 	int m_modelMatrixLoc;
+	int m_colorLoc;
 	int m_normalMatrixLoc;
 	int m_lightPosLoc;
 	QMatrix4x4 m_proj;
@@ -61,6 +65,6 @@ private:
 
 	void init_vbo(unsigned int resolution);
 
-	int m_profileCount=1;
-	unsigned int m_resolution=3;
+	int m_profileCount;
+	unsigned int m_resolution;
 };

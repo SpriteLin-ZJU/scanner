@@ -6,13 +6,73 @@
 #include <math.h>
 
 
-
+QVector<GLfloat> netVertices;
+void fillNetVertices()
+{
+	for (int i = 0; i <= 10; i++) {
+		GLfloat y = -50.0f + i * 10.0f;
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(y);
+		netVertices.push_back(0.0f);
+		netVertices.push_back(30.0f);
+		netVertices.push_back(y);
+		netVertices.push_back(0.0f);
+	}
+	for (int i = 0; i <= 5; i++) {
+		GLfloat z = i * 10.0f;
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(z);
+		netVertices.push_back(30.0f);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(z);
+	}
+	//平行于y轴的网格
+	for (int i = 0; i <= 6; i++) {
+		GLfloat x = -30.0f + i * 10.0f;
+		netVertices.push_back(x);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(0.0f);
+		netVertices.push_back(x);
+		netVertices.push_back(50.0f);
+		netVertices.push_back(0.0f);
+	}
+	for (int i = 0; i <= 5; i++) {
+		GLfloat z = i * 10.0f;
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(z);
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(50.0f);
+		netVertices.push_back(z);
+	}
+	//平行于z轴的网格
+	for (int i = 0; i <= 6; i++) {
+		GLfloat x = -30.0f + i * 10.0f;
+		netVertices.push_back(x);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(0.0f);
+		netVertices.push_back(x);
+		netVertices.push_back(-50.0f);
+		netVertices.push_back(50.0f);
+	}
+	for (int i = 0; i <= 10; i++) {
+		GLfloat y = -50.0f + i * 10.0f;
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(y);
+		netVertices.push_back(0.0f);
+		netVertices.push_back(-30.0f);
+		netVertices.push_back(y);
+		netVertices.push_back(50.0f);
+	}
+}
 
 GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), 
 	m_program(0),
 	m_vbo(QOpenGLBuffer::VertexBuffer),
-	m_ebo(QOpenGLBuffer::IndexBuffer)
+	m_ebo(QOpenGLBuffer::IndexBuffer),
+	m_netVbo(QOpenGLBuffer::VertexBuffer)
 {
 }
 
@@ -60,6 +120,7 @@ void GLWidget::cleanup()
 {
 	makeCurrent();
 	m_vbo.destroy();
+	m_netVbo.destroy();
 	delete m_program;
 	m_program = 0;
 	doneCurrent();
@@ -80,8 +141,9 @@ static const char *vertexShaderSource =
 static const char *fragmentShaderSource =
 "#version 430 core\n"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;\n"
 "void main() {\n"
-"   FragColor = vec4(1.0,0.0,0.0,1.0);\n"
+"   FragColor = ourColor;\n"
 "}\n";
 
 
@@ -90,6 +152,10 @@ void GLWidget::initializeGL()
 	initializeOpenGLFunctions();
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 1, 1, 1);
+
+	// Our camera never changes in this example.
+	m_camera.setToIdentity();
+	m_camera.translate(0, 0, -150);
 
 	//编译并链接着色器
 	m_program = new QOpenGLShaderProgram();
@@ -100,32 +166,36 @@ void GLWidget::initializeGL()
 	m_program->bindAttributeLocation("aPos", 0);
 	if (!m_program->link())
 		return;
+	
+	//获取着色器属性位置
 	m_program->bind();
 	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
 	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
 	m_modelMatrixLoc = m_program->uniformLocation("modelMatrix");
+	m_colorLoc = m_program->uniformLocation("ourColor");
 
-	//创建VAO
+	//创建点云VAO
 	m_vao.create();
 	m_vao.bind();
-	
 	//创建顶点缓冲对象VBO
 	m_vbo.create();
 	m_vbo.bind();
-	
 	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);		//两种方式均可
 	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(GLfloat), 0);
 	m_program->enableAttributeArray(0);
-	
-	// Our camera never changes in this example.
-	m_camera.setToIdentity();
-	m_camera.translate(0, 0, -100);
-
-	//创建EBO
-	//m_ebo.create();
-	//m_ebo.bind();
-
 	m_vao.release();
+
+	//创建网格
+	fillNetVertices();
+	m_netVao.create();
+	m_netVao.bind();
+	m_netVbo.create();
+	m_netVbo.bind();
+	m_netVbo.allocate(netVertices.constData(), netVertices.size() * sizeof(GLfloat));
+	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
+	m_program->enableAttributeArray(0);
+	m_netVao.release();
+
 	m_program->release();
 }
 
@@ -133,8 +203,8 @@ void GLWidget::resizeGL(int width, int height)
 {
 	glViewport(0, 0, width, height);
 	m_proj.setToIdentity();
-	//m_proj.perspective(45.0f, GLfloat(width) / height, 0.01f, 200.0f);
-	m_proj.ortho(-40.0f, 40.0f, -50.0f, 50.0f, 0.1f, 200.0f);
+	m_proj.perspective(45.0f, GLfloat(width) / height, 0.01f, 300.0f);
+	//m_proj.ortho(-40.0f, 40.0f, -50.0f, 50.0f, 0.1f, 200.0f);
 }
 
 void GLWidget::paintGL()
@@ -154,13 +224,18 @@ void GLWidget::paintGL()
 	m_program->setUniformValue(m_viewMatrixLoc, m_camera);
 	m_program->setUniformValue(m_modelMatrixLoc, m_model);
 
-
-
+	//绘制点云数据
 	m_vao.bind();
-
+	m_program->setUniformValue(m_colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
 	glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
-
 	m_vao.release();
+
+	//绘制坐标轴-网格
+	m_netVao.bind();
+	m_program->setUniformValue(m_colorLoc, 0.0f, 0.0f, 0.0f, 0.5f);
+	glDrawArrays(GL_LINES, 0, (GLsizei)96);
+	m_netVao.release();
+
 	m_program->release();
 
 }
@@ -205,7 +280,7 @@ void GLWidget::init_vbo(unsigned int resolution)
 	//更新vbo数据
 	if(!m_vbo.bind())
 		return;
-	m_vbo.allocate(vertices.constData(), m_profileCount*m_resolution*sizeof(GLfloat));
+	m_vbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
 	
 }
 
