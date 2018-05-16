@@ -1,4 +1,3 @@
-#include "graphbox.h"
 #include "scannerbox.h"
 #include "mainwindow.h"
 #include "glwidget.h"
@@ -19,13 +18,11 @@ MainWindow::MainWindow(QWidget *parent)
 	createStatusBar();
 
 	m_scannerBox = new ScannerBox(this);
-	m_graphBox = new GraphBox(this);
 	m_glwidget = new GLWidget(this);
 
 	QWidget* widget = new QWidget;
 	QVBoxLayout* vlayout = new QVBoxLayout;
 	vlayout->addWidget(m_scannerBox);
-	vlayout->addWidget(m_graphBox);
 	vlayout->addStretch();
 	QHBoxLayout* hlayout = new QHBoxLayout;
 	hlayout->addLayout(vlayout);

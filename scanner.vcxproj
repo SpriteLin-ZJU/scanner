@@ -121,7 +121,6 @@
   <ItemGroup>
     <ClCompile Include="DllLoader.cpp" />
     <ClCompile Include="glwidget.cpp" />
-    <ClCompile Include="graphbox.cpp" />
     <ClCompile Include="InterfaceLLT_2.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
@@ -139,7 +138,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DllLoader.h" />
-    <QtMoc Include="graphbox.h" />
     <QtMoc Include="glwidget.h" />
     <ClInclude Include="InterfaceLLT_2.h" />
     <QtMoc Include="scannerbox.h" />

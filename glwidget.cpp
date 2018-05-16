@@ -269,7 +269,7 @@ void GLWidget::init_vbo(unsigned int resolution)
 	for (int i = 0; i < m_profileCount; i++) {
 		for (int j = 0; j < resolution; j++) {
 			vertices.push_back(vdValueX[i*resolution + j]);
-			vertices.push_back(i);
+			vertices.push_back(i-m_profileCount/2.0);
 			vertices.push_back(vdValueZ[i*resolution + j]-zMid);
 		}
 	}

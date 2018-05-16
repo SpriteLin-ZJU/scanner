@@ -46,7 +46,7 @@ void GraphModifier::createAxisSettings()
 	m_graph->axisY()->setLabelFormat("%.2f mm");
 	m_graph->axisZ()->setLabelFormat("%.2f mm");
 	
-	//m_graph->axisX()->setRange(-30.0f, 30.0f);
+	m_graph->axisX()->setRange(-10.0f, 60.0f);
 	m_graph->axisY()->setRange(90.0f, 120.0f);
 	m_graph->axisZ()->setRange(-30.0f, 30.0f);
 
@@ -72,7 +72,7 @@ void GraphModifier::updateGraph(unsigned int resolution)
 	for (int i = 0; i < profileCount; i++) {
 		m_newRow = new QSurfaceDataRow(resolution);
 		for (int j = 0; j < resolution; j++) {
-			float x = (float)i;
+			float x = (float)i/2.0;
 
 			float y = (float)vdValueZ[i*resolution + j];
 			
