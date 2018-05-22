@@ -51,6 +51,9 @@
     <ClCompile Include="glwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="printerbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -63,6 +66,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="glwidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="printerbox.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

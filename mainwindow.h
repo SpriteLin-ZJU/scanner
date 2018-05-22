@@ -2,6 +2,7 @@
 #include <QtWidgets/QMainWindow>
 
 class ScannerBox;
+class PrinterBox;
 class GLWidget;
 class QLabel;
 class MainWindow : public QMainWindow
@@ -28,5 +29,6 @@ private:
 	QMenu* m_fileMenu;
 
 	ScannerBox* m_scannerBox;
+	PrinterBox* m_printerBox;
 	GLWidget* m_glwidget;
 };

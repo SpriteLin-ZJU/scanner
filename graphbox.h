@@ -1,4 +1,5 @@
 #pragma once
+#include "graphmodifier.h"
 #include <QWidget>
 
 class QGroupBox;
@@ -9,9 +10,13 @@ class GraphBox : public QWidget
 {
 	Q_OBJECT
 public:
-	GraphBox(QWidget *parent = Q_NULLPTR);
+	GraphBox(Q3DSurface *graph, QWidget *parent = Q_NULLPTR);
 
+	void updateGraph(unsigned int resolution) {
+		m_modifier->updateGraph(resolution);
+	}
 private:
+	GraphModifier * m_modifier;
 	//切面选择对话框
 	QGroupBox* m_selectionGroupBox;
 	QRadioButton* m_modeNoneRB;
