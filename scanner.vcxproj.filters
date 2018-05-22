@@ -48,10 +48,10 @@
     <ClCompile Include="settingsdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphbox.cpp">
+    <ClCompile Include="glwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="graphmodifier.cpp">
+    <ClCompile Include="printerbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,10 +65,10 @@
     <QtMoc Include="settingsdialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="graphbox.h">
+    <QtMoc Include="glwidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="graphmodifier.h">
+    <QtMoc Include="printerbox.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
