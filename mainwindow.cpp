@@ -56,7 +56,7 @@ void MainWindow::createActions()
 	m_exitAction->setShortcut(tr("Ctrl+Q"));
 	m_exitAction->setStatusTip(tr("Exit"));
 	connect(m_exitAction, &QAction::triggered, this, &MainWindow::close);
-	//test
+	//test merge
 }
 
 void MainWindow::createMenus()
