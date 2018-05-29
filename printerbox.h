@@ -6,6 +6,7 @@ class QLabel;
 class QComboBox;
 class QPushButton;
 class QLineEdit;
+class QSerialPort;
 
 class PrinterBox : public QWidget
 {
@@ -13,9 +14,13 @@ class PrinterBox : public QWidget
 public:
 	PrinterBox(QWidget *parent = Q_NULLPTR);
 	~PrinterBox();
+signals:
+	void updateStatus(QString&);
 private:
+	const int BUFFER_SIZE = 127;
+	QList<QString> m_fileGcode;
+
 	QGroupBox* m_printGroupBox;
-	
 	//端口设置
 	QLabel* m_portLabel;
 	QLabel* m_baudrateLabel;
@@ -23,6 +28,7 @@ private:
 	QComboBox* m_baudComboBox;
 	QPushButton* m_refreshButton;
 	QPushButton* m_printConnectButton;
+	QSerialPort* m_serialPort;
 
 	//打印设置
 	QLabel* m_printFileLabel;
@@ -32,4 +38,10 @@ private:
 	QPushButton* m_sendCodeButton;
 	QPushButton* m_printButton;
 	
+	void initPorts();
+	void connectPort();
+	void changeConnectState();
+	void openFile();
+	void sendManuGcode();
+	void OnError(QString errorText);
 };

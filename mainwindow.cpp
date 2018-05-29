@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
 }
 
 void MainWindow::createActions()

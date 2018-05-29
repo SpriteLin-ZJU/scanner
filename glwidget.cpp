@@ -4,7 +4,7 @@
 #include <QOpenGLShaderProgram>
 #include <QCoreApplication>
 #include <math.h>
-
+#include <QDebug>
 
 QVector<GLfloat> netVertices;
 void fillNetVertices()
@@ -74,46 +74,26 @@ GLWidget::GLWidget(QWidget* parent)
 	m_ebo(QOpenGLBuffer::IndexBuffer),
 	m_netVbo(QOpenGLBuffer::VertexBuffer)
 {
+	m_xRot = 90;
+	m_yRot = 0;
+
+	m_zoom = 1;
+
+	m_xPan = 0;
+	m_yPan = 0;
+	m_distance = 200;
+
+	m_xLookAt = 0;
+	m_yLookAt = 0;
+	m_zLookAt = 0;
+
+	updateProjection();
+	updateView();
 }
 
 GLWidget::~GLWidget()
 {
 	cleanup();
-}
-
-static void qNormalizeAngle(int &angle)
-{
-	while (angle < 0)
-		angle += 360 * 16;
-	while (angle > 360 * 16)
-		angle -= 360 * 16;
-}
-
-void GLWidget::setXRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if (angle != m_xRot) {
-		m_xRot = angle;
-		update();
-	}
-}
-
-void GLWidget::setYRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if (angle != m_yRot) {
-		m_yRot = angle;
-		update();
-	}
-}
-
-void GLWidget::setZRotation(int angle)
-{
-	qNormalizeAngle(angle);
-	if (angle != m_zRot) {
-		m_zRot = angle;
-		update();
-	}
 }
 
 void GLWidget::cleanup()
@@ -130,11 +110,10 @@ void GLWidget::cleanup()
 static const char *vertexShaderSource =
 "#version 430 core\n"
 "in vec3 aPos;\n"
-"uniform mat4 projMatrix;\n"
-"uniform mat4 viewMatrix;\n"
-"uniform mat4 modelMatrix;\n"
+"uniform mat4 mvpMatrix;\n"
+"uniform mat4 mvMatrix;\n"
 "void main() {\n"
-"    gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(aPos,1.0);\n"
+"    gl_Position = mvpMatrix * vec4(aPos,1.0);\n"
 "}\n";
 
 //片段着色器
@@ -153,9 +132,6 @@ void GLWidget::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 1, 1, 1);
 
-	// Our camera never changes in this example.
-	m_camera.setToIdentity();
-	m_camera.translate(0, 0, -150);
 
 	//编译并链接着色器
 	m_program = new QOpenGLShaderProgram();
@@ -169,9 +145,8 @@ void GLWidget::initializeGL()
 	
 	//获取着色器属性位置
 	m_program->bind();
-	m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-	m_viewMatrixLoc = m_program->uniformLocation("viewMatrix");
-	m_modelMatrixLoc = m_program->uniformLocation("modelMatrix");
+	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
+	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
 	m_colorLoc = m_program->uniformLocation("ourColor");
 
 	//创建点云VAO
@@ -202,9 +177,38 @@ void GLWidget::initializeGL()
 void GLWidget::resizeGL(int width, int height)
 {
 	glViewport(0, 0, width, height);
-	m_proj.setToIdentity();
-	m_proj.perspective(45.0f, GLfloat(width) / height, 0.01f, 300.0f);
-	//m_proj.ortho(-40.0f, 40.0f, -50.0f, 50.0f, 0.1f, 200.0f);
+	updateProjection();
+}
+
+void GLWidget::updateProjection()
+{
+	m_projectionMatrix.setToIdentity();
+	double asp = (double)width() / height();
+	//m_projectionMatrix.perspective(45.0f, GLfloat(asp), 0.01f, 300.0f);
+	m_projectionMatrix.frustum((-0.5 + m_xPan) * asp, (0.5 + m_xPan) * asp, -0.5 + m_yPan, 0.5 + m_yPan, 2, m_distance * 2);
+	update();
+}
+
+void GLWidget::updateView()
+{
+	m_viewMatrix.setToIdentity();
+
+	double r = m_distance;
+	double angX = M_PI / 180 * m_xRot;
+	double angY = M_PI / 180 * m_yRot;
+
+	QVector3D eye(r * cos(angX) * sin(angY) + m_xLookAt, r * sin(angX) + m_yLookAt, r * cos(angX) * cos(angY) + m_zLookAt);
+	QVector3D center(m_xLookAt, m_yLookAt, m_zLookAt);
+	QVector3D up(fabs(m_xRot) == 90 ? -sin(angY + (m_xRot < 0 ? M_PI : 0)) : 0, cos(angX), fabs(m_xRot) == 90 ? -cos(angY + (m_xRot < 0 ? M_PI : 0)) : 0);
+
+	m_viewMatrix.lookAt(eye, center, up.normalized());
+
+	m_viewMatrix.translate(m_xLookAt, m_yLookAt, m_zLookAt);
+	m_viewMatrix.scale(m_zoom, m_zoom, m_zoom);
+	m_viewMatrix.translate(-m_xLookAt, -m_yLookAt, -m_zLookAt);
+
+	m_viewMatrix.rotate(-90, 1.0, 0.0, 0.0);
+	update();
 }
 
 void GLWidget::paintGL()
@@ -214,15 +218,10 @@ void GLWidget::paintGL()
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glPointSize(2);
 
-	m_model.setToIdentity();
-	m_model.rotate(180.0f - (m_xRot / 16.0f), 1, 0, 0);
-	m_model.rotate(m_yRot / 16.0f, 0, 1, 0);
-	m_model.rotate(m_zRot / 16.0f, 0, 0, 1);
 
 	m_program->bind();
-	m_program->setUniformValue(m_projMatrixLoc, m_proj);
-	m_program->setUniformValue(m_viewMatrixLoc, m_camera);
-	m_program->setUniformValue(m_modelMatrixLoc, m_model);
+	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
+	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
 
 	//绘制点云数据
 	m_vao.bind();
@@ -287,21 +286,65 @@ void GLWidget::init_vbo(unsigned int resolution)
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
 	m_lastPos = event->pos();
+	m_xLastRot = m_xRot;
+	m_yLastRot = m_yRot;
+	m_xLastPan = m_xPan;
+	m_yLastPan = m_yPan;
+	qDebug("%02f", m_yRot);
+	qDebug("%02f", m_xLookAt);
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-	int dx = event->x() - m_lastPos.x();
-	int dy = event->y() - m_lastPos.y();
+	if ((event->buttons() & Qt::MiddleButton && !(event->modifiers() & Qt::ShiftModifier)) || event->buttons() & Qt::LeftButton) {
 
-	if (event->buttons() & Qt::LeftButton) {
-		setXRotation(m_xRot + 8 * dy);
-		setYRotation(m_yRot + 8 * dx);
+		//stopViewAnimation();
+
+		//m_yRot = m_yLastRot - (event->x() - m_lastPos.x()) * 0.5;
+		m_yRot = normalizeAngle( m_yLastRot - (event->x() - m_lastPos.x()) * 0.5);
+		qDebug ("%02f",m_yRot);
+		m_xRot = m_xLastRot + (event->y() - m_lastPos.y()) * 0.5;
+
+		if (m_xRot < -90) m_xRot = -90;
+		if (m_xRot > 90) m_xRot = 90;
+
+		updateView();
+		emit rotationChanged();
 	}
-	else if (event->buttons() & Qt::RightButton) {
-		setXRotation(m_xRot + 8 * dy);
-		setZRotation(m_zRot + 8 * dx);
+
+	if ((event->buttons() & Qt::MiddleButton && event->modifiers() & Qt::ShiftModifier) || event->buttons() & Qt::RightButton) {
+		m_xPan = m_xLastPan - (event->pos().x() - m_lastPos.x()) * 1 / (double)width();
+		m_yPan = m_yLastPan + (event->pos().y() - m_lastPos.y()) * 1 / (double)height();
+
+		updateProjection();
 	}
-	m_lastPos = event->pos();
+}
+
+void GLWidget::wheelEvent(QWheelEvent *event)
+{
+	if (m_zoom > 0.1 && event->delta() < 0) {
+		m_xPan -= ((double)event->pos().x() / width() - 0.5 + m_xPan) * (1 - 1 / ZOOM_STEP);
+		m_yPan += ((double)event->pos().y() / height() - 0.5 - m_yPan) * (1 - 1 / ZOOM_STEP);
+
+		m_zoom /= ZOOM_STEP;
+	}
+	else if (m_zoom < 10 && event->delta() > 0)
+	{
+		m_xPan -= ((double)event->pos().x() / width() - 0.5 + m_xPan) * (1 - ZOOM_STEP);
+		m_yPan += ((double)event->pos().y() / height() - 0.5 - m_yPan) * (1 - ZOOM_STEP);
+
+		m_zoom *= ZOOM_STEP;
+	}
+
+	updateProjection();
+	updateView();
+}
+
+double GLWidget::normalizeAngle(double angle)
+{
+	while (angle < 0)	angle += 360;
+	while (angle > 360) angle -= 360;
+
+	return angle;
 }
 

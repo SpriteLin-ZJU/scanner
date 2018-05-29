@@ -21,16 +21,15 @@ class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 public:
 	explicit GLWidget(QWidget *parent = Q_NULLPTR);
 	~GLWidget();
-
-	void setXRotation(int angle);
-	void setYRotation(int angle);
-	void setZRotation(int angle);
 	void cleanup();
 
 	void updateGraph(unsigned int resolution) {
 		init_vbo(resolution);
 		update();
 	}
+
+signals:
+	void rotationChanged();
 
 protected:
 	void initializeGL() override;
@@ -39,8 +38,12 @@ protected:
 
 	void mousePressEvent(QMouseEvent *event) override;
 	void mouseMoveEvent(QMouseEvent *event) override;
+	void wheelEvent(QWheelEvent *event) override;
 
 private:
+	const double M_PI = 3.14159265358979323846;
+	const double ZOOM_STEP = 1.1;
+
 	QOpenGLShaderProgram * m_program;
 	QOpenGLVertexArrayObject m_vao;
 	QOpenGLBuffer m_vbo;
@@ -49,21 +52,25 @@ private:
 	QOpenGLVertexArrayObject m_netVao;
 	QOpenGLBuffer m_netVbo;
 
-	int m_xRot;
-	int m_yRot;
-	int m_zRot;
+	double m_xRot, m_yRot, m_xLastRot, m_yLastRot;
+	double m_xPan, m_yPan, m_xLastPan, m_yLastPan;
+	double m_xLookAt, m_yLookAt, m_zLookAt;
 	QPoint m_lastPos;
-	int m_projMatrixLoc;
-	int m_viewMatrixLoc;
-	int m_modelMatrixLoc;
+	double m_zoom;
+	double m_distance;
+
+	int m_mvpMatrixLoc;
+	int m_mvMatrixLoc;
 	int m_colorLoc;
 	int m_normalMatrixLoc;
 	int m_lightPosLoc;
-	QMatrix4x4 m_proj;
-	QMatrix4x4 m_camera;
-	QMatrix4x4 m_model;
+	QMatrix4x4 m_projectionMatrix;
+	QMatrix4x4 m_viewMatrix;
 
 	void init_vbo(unsigned int resolution);
+	double normalizeAngle(double angle);
+	void updateProjection();
+	void updateView();
 
 	int m_profileCount;
 	unsigned int m_resolution;

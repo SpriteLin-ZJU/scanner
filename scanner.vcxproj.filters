@@ -59,13 +59,13 @@
     <QtMoc Include="mainwindow.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="scannerbox.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="settingsdialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="glwidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="scannerbox.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="printerbox.h">
