@@ -11,10 +11,14 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTextStream>
+#include <QRegexp>
+#include <QTimer>
+#include <QDeBug>
 
 PrinterBox::PrinterBox(QWidget *parent) :
 	QWidget(parent)
 {
+
 	m_printGroupBox = new QGroupBox(tr("Printer"), this);
 	m_printGroupBox->setMaximumWidth(300);
 
@@ -63,12 +67,26 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	connect(m_printConnectButton, &QPushButton::clicked, this, &PrinterBox::changeConnectState);
 	connect(m_openFileButton, &QPushButton::clicked, this, &PrinterBox::openFile);
 	connect(m_sendCodeButton, &QPushButton::clicked, this, &PrinterBox::sendManuGcode);
+	connect(m_printButton, &QPushButton::clicked, this, &PrinterBox::printGcode);
+	connect(m_serialPort, &QSerialPort::readyRead, this, &PrinterBox::onSerialReadyRead);
 }
 
 
 PrinterBox::~PrinterBox()
 {
 	
+}
+
+void PrinterBox::emergencyStop()
+{
+	m_serialPort->write(QString("M112\r").toLatin1());
+	m_serialPort->flush();
+}
+
+void PrinterBox::stopPrinting()
+{
+	m_fileGcode.clear();
+	m_serialPort->flush();
 }
 
 void PrinterBox::initPorts()
@@ -120,6 +138,7 @@ void PrinterBox::changeConnectState()
 		m_serialPort->close();
 		m_printConnectButton->setText("Connect");
 		m_sendCodeButton->setDisabled(true);
+		m_printButton->setDisabled(true);
 	}
 }
 
@@ -134,6 +153,7 @@ void PrinterBox::openFile()
 			return;
 		}
 
+		//将文件打开的gcode分行存入至QList<QString>中
 		QTextStream textStream(&file);
 		m_fileGcode.clear();
 		while (!textStream.atEnd())
@@ -141,6 +161,8 @@ void PrinterBox::openFile()
 
 		QString s = "File name:" + path;
 		m_printFileLabel->setText(s);
+		if (m_printConnectButton->text() == "Disconnect")
+			m_printButton->setEnabled(true);
 	}
 	else {
 		QMessageBox::warning(this, tr("Path"),
@@ -151,13 +173,65 @@ void PrinterBox::openFile()
 void PrinterBox::sendManuGcode()
 {
 	m_serialPort->write((m_manuCodeEdit->text()+"\r").toLatin1());
+	m_manuCodeEdit->clear();
 }
+
+void PrinterBox::printGcode()
+{
+	QRegExp rx("^[GMT]\\d{1,3}\\s*([XYZTSFE]\\s*-?\\d+\\.?\\d*\\s*){0,4}");
+	rx.setMinimal(false);
+
+	//先一次性发送3条有效指令给Marlin缓存
+	if (m_printButton->isEnabled()) {
+		m_serialPort->flush();
+		for (int i = 0; i < qMin(2, m_fileGcode.size()); i++) {
+			int pos = 0;
+			if ((pos = rx.indexIn(m_fileGcode.at(0), pos)) != -1) {
+				m_serialPort->write((rx.cap(0) + "\r").toLatin1());
+				qDebug() << rx.cap(0);
+				m_fileGcode.removeFirst();
+			}
+			else {
+				m_fileGcode.removeFirst();
+				i--;
+			}
+		}
+		m_printButton->setDisabled(true);
+	}
+	
+	if (!m_fileGcode.isEmpty()) {
+		isPrinting = true;
+		//使用正则表达式验证是否为Gcode
+		int pos = 0;
+		if ((pos = rx.indexIn(m_fileGcode.at(0), pos)) != -1) {
+			m_serialPort->write((rx.cap(0) + "\r").toLatin1());
+			qDebug() << rx.cap(0);
+			m_fileGcode.removeFirst();
+		}
+		else {
+			m_fileGcode.removeFirst();
+			printGcode();
+		}
+	}
+	else
+		isPrinting = false;
+}
+
+void PrinterBox::onSerialReadyRead()
+{
+	while (m_serialPort->canReadLine()&&isPrinting) {
+		QString data = m_serialPort->readLine().trimmed();
+		qDebug() << data;
+		if (data == "ok")
+			printGcode();
+	}
+}
+
 
 void PrinterBox::OnError(QString errorText)
 {
 	emit updateStatus(errorText);
 }
-
 
 
 

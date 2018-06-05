@@ -24,7 +24,7 @@ public:
 	void cleanup();
 
 	void updateGraph(unsigned int resolution) {
-		init_vbo(resolution);
+		updateScannerVbo(resolution);
 		update();
 	}
 
@@ -45,29 +45,35 @@ private:
 	const double ZOOM_STEP = 1.1;
 
 	QOpenGLShaderProgram * m_program;
-	QOpenGLVertexArrayObject m_vao;
-	QOpenGLBuffer m_vbo;
-	QOpenGLBuffer m_ebo;
+	QOpenGLVertexArrayObject m_scannerVao;
+	QOpenGLBuffer m_scannerVbo;
+	QOpenGLBuffer m_scannerEbo;
 
 	QOpenGLVertexArrayObject m_netVao;
 	QOpenGLBuffer m_netVbo;
 
-	double m_xRot, m_yRot, m_xLastRot, m_yLastRot;
-	double m_xPan, m_yPan, m_xLastPan, m_yLastPan;
-	double m_xLookAt, m_yLookAt, m_zLookAt;
+	double m_xRot=45, m_yRot=135, m_xLastRot=0, m_yLastRot=0;
+	double m_xPan=0, m_yPan=0.1, m_xLastPan=0, m_yLastPan=0;
+	double m_xLookAt=0, m_yLookAt=0, m_zLookAt=0;
 	QPoint m_lastPos;
-	double m_zoom;
-	double m_distance;
+	double m_zoom=0.8;
+	double m_distance=200;
 
-	int m_mvpMatrixLoc;
-	int m_mvMatrixLoc;
-	int m_colorLoc;
-	int m_normalMatrixLoc;
-	int m_lightPosLoc;
+	QVector<GLfloat> netVertices;
+
+	int m_mvpMatrixLoc=0;
+	int m_mvMatrixLoc=0;
+	int m_colorLoc=0;
+	int m_normalMatrixLoc=0;
+	int m_lightPosLoc=0;
 	QMatrix4x4 m_projectionMatrix;
 	QMatrix4x4 m_viewMatrix;
 
-	void init_vbo(unsigned int resolution);
+	void creatScannerVao();
+	void creatNetVao();
+	void fillNetVertices();
+
+	void updateScannerVbo(unsigned int resolution);
 	double normalizeAngle(double angle);
 	void updateProjection();
 	void updateView();

@@ -25,8 +25,11 @@ private:
 	QAction* m_loadAction;
 	QAction* m_saveAction;
 	QAction* m_exitAction;
+	QAction* m_emergencyStopAction;
+	QAction* m_stopPrintingAction;
 
 	QMenu* m_fileMenu;
+	QToolBar* m_toolBar;
 
 	ScannerBox* m_scannerBox;
 	PrinterBox* m_printerBox;

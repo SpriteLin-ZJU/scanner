@@ -6,8 +6,175 @@
 #include <math.h>
 #include <QDebug>
 
-QVector<GLfloat> netVertices;
-void fillNetVertices()
+GLWidget::GLWidget(QWidget* parent)
+	:QOpenGLWidget(parent), 
+	m_program(0),
+	m_scannerVbo(QOpenGLBuffer::VertexBuffer),
+	m_scannerEbo(QOpenGLBuffer::IndexBuffer),
+	m_netVbo(QOpenGLBuffer::VertexBuffer)
+{
+	updateProjection();
+	updateView();
+}
+
+GLWidget::~GLWidget()
+{
+	cleanup();
+}
+
+void GLWidget::cleanup()
+{
+	makeCurrent();
+	m_scannerVbo.destroy();
+	m_netVbo.destroy();
+	delete m_program;
+	m_program = 0;
+	doneCurrent();
+}
+
+//顶点着色器
+static const char *vertexShaderSource =
+"#version 430 core\n"
+"in vec3 aPos;\n"
+"uniform mat4 mvpMatrix;\n"
+"uniform mat4 mvMatrix;\n"
+"void main() {\n"
+"    gl_Position = mvpMatrix * vec4(aPos,1.0);\n"
+"}\n";
+
+//片段着色器
+static const char *fragmentShaderSource =
+"#version 430 core\n"
+"out vec4 FragColor;\n"
+"uniform vec4 ourColor;\n"
+"void main() {\n"
+"   FragColor = ourColor;\n"
+"}\n";
+
+
+void GLWidget::initializeGL()
+{
+	initializeOpenGLFunctions();
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(1, 1, 1, 1);
+
+
+	//编译并链接着色器
+	m_program = new QOpenGLShaderProgram();
+	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource))
+		return;
+	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource))
+		return;
+	m_program->bindAttributeLocation("aPos", 0);
+	if (!m_program->link())
+		return;
+	
+	//获取着色器属性位置
+	m_program->bind();
+	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
+	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
+	m_colorLoc = m_program->uniformLocation("ourColor");
+
+	//创建点云VAO
+	creatScannerVao();
+	//创建网格VAO
+	creatNetVao();
+	//创建
+
+	m_program->release();
+}
+
+void GLWidget::resizeGL(int width, int height)
+{
+	glViewport(0, 0, width, height);
+	updateProjection();
+}
+
+void GLWidget::updateProjection()
+{
+	m_projectionMatrix.setToIdentity();
+	double asp = (double)width() / height();
+	m_projectionMatrix.frustum((-0.5 + m_xPan) * asp, (0.5 + m_xPan) * asp, -0.5 + m_yPan, 0.5 + m_yPan, 2, m_distance * 2);
+	update();
+}
+
+void GLWidget::updateView()
+{
+	m_viewMatrix.setToIdentity();
+
+	double r = m_distance;
+	double angX = M_PI / 180 * m_xRot;
+	double angY = M_PI / 180 * m_yRot;
+
+	QVector3D eye(r * cos(angX) * sin(angY) + m_xLookAt, r * sin(angX) + m_yLookAt, r * cos(angX) * cos(angY) + m_zLookAt);
+	QVector3D center(m_xLookAt, m_yLookAt, m_zLookAt);
+	QVector3D up(fabs(m_xRot) == 90 ? -sin(angY + (m_xRot < 0 ? M_PI : 0)) : 0, cos(angX), fabs(m_xRot) == 90 ? -cos(angY + (m_xRot < 0 ? M_PI : 0)) : 0);
+
+	m_viewMatrix.lookAt(eye, center, up.normalized());
+
+	m_viewMatrix.translate(m_xLookAt, m_yLookAt, m_zLookAt);
+	m_viewMatrix.scale(m_zoom, m_zoom, m_zoom);
+	m_viewMatrix.translate(-m_xLookAt, -m_yLookAt, -m_zLookAt);
+
+	m_viewMatrix.rotate(-90, 1.0, 0.0, 0.0);
+	update();
+}
+
+void GLWidget::paintGL()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glPointSize(2);
+
+
+	m_program->bind();
+	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
+	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
+
+	//绘制点云数据
+	m_scannerVao.bind();
+	m_program->setUniformValue(m_colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
+	glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
+	m_scannerVao.release();
+
+	//绘制坐标轴-网格
+	m_netVao.bind();
+	m_program->setUniformValue(m_colorLoc, 0.0f, 0.0f, 0.0f, 0.5f);
+	glDrawArrays(GL_LINES, 0, (GLsizei)96);
+	m_netVao.release();
+
+	m_program->release();
+
+}
+
+void GLWidget::creatScannerVao()
+{
+	//创建点云VAO
+	m_scannerVao.create();
+	m_scannerVao.bind();
+	//创建顶点缓冲对象VBO
+	m_scannerVbo.create();
+	m_scannerVbo.bind();
+	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
+	m_program->enableAttributeArray(0);
+	m_scannerVao.release();
+}
+
+void GLWidget::creatNetVao()
+{
+	m_netVao.create();
+	m_netVao.bind();
+	m_netVbo.create();
+	m_netVbo.bind();
+	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
+	m_program->enableAttributeArray(0);
+	m_netVao.release();
+	fillNetVertices();
+	m_netVbo.allocate(netVertices.constData(), netVertices.size() * sizeof(GLfloat));
+}
+
+void GLWidget::fillNetVertices()
 {
 	for (int i = 0; i <= 10; i++) {
 		GLfloat y = -50.0f + i * 10.0f;
@@ -67,179 +234,7 @@ void fillNetVertices()
 	}
 }
 
-GLWidget::GLWidget(QWidget* parent)
-	:QOpenGLWidget(parent), 
-	m_program(0),
-	m_vbo(QOpenGLBuffer::VertexBuffer),
-	m_ebo(QOpenGLBuffer::IndexBuffer),
-	m_netVbo(QOpenGLBuffer::VertexBuffer)
-{
-	m_xRot = 90;
-	m_yRot = 0;
-
-	m_zoom = 1;
-
-	m_xPan = 0;
-	m_yPan = 0;
-	m_distance = 200;
-
-	m_xLookAt = 0;
-	m_yLookAt = 0;
-	m_zLookAt = 0;
-
-	updateProjection();
-	updateView();
-}
-
-GLWidget::~GLWidget()
-{
-	cleanup();
-}
-
-void GLWidget::cleanup()
-{
-	makeCurrent();
-	m_vbo.destroy();
-	m_netVbo.destroy();
-	delete m_program;
-	m_program = 0;
-	doneCurrent();
-}
-
-//顶点着色器
-static const char *vertexShaderSource =
-"#version 430 core\n"
-"in vec3 aPos;\n"
-"uniform mat4 mvpMatrix;\n"
-"uniform mat4 mvMatrix;\n"
-"void main() {\n"
-"    gl_Position = mvpMatrix * vec4(aPos,1.0);\n"
-"}\n";
-
-//片段着色器
-static const char *fragmentShaderSource =
-"#version 430 core\n"
-"out vec4 FragColor;\n"
-"uniform vec4 ourColor;\n"
-"void main() {\n"
-"   FragColor = ourColor;\n"
-"}\n";
-
-
-void GLWidget::initializeGL()
-{
-	initializeOpenGLFunctions();
-	glEnable(GL_DEPTH_TEST);
-	glClearColor(1, 1, 1, 1);
-
-
-	//编译并链接着色器
-	m_program = new QOpenGLShaderProgram();
-	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource))
-		return;
-	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource))
-		return;
-	m_program->bindAttributeLocation("aPos", 0);
-	if (!m_program->link())
-		return;
-	
-	//获取着色器属性位置
-	m_program->bind();
-	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
-	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
-	m_colorLoc = m_program->uniformLocation("ourColor");
-
-	//创建点云VAO
-	m_vao.create();
-	m_vao.bind();
-	//创建顶点缓冲对象VBO
-	m_vbo.create();
-	m_vbo.bind();
-	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);		//两种方式均可
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 3 * sizeof(GLfloat), 0);
-	m_program->enableAttributeArray(0);
-	m_vao.release();
-
-	//创建网格
-	fillNetVertices();
-	m_netVao.create();
-	m_netVao.bind();
-	m_netVbo.create();
-	m_netVbo.bind();
-	m_netVbo.allocate(netVertices.constData(), netVertices.size() * sizeof(GLfloat));
-	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
-	m_program->enableAttributeArray(0);
-	m_netVao.release();
-
-	m_program->release();
-}
-
-void GLWidget::resizeGL(int width, int height)
-{
-	glViewport(0, 0, width, height);
-	updateProjection();
-}
-
-void GLWidget::updateProjection()
-{
-	m_projectionMatrix.setToIdentity();
-	double asp = (double)width() / height();
-	//m_projectionMatrix.perspective(45.0f, GLfloat(asp), 0.01f, 300.0f);
-	m_projectionMatrix.frustum((-0.5 + m_xPan) * asp, (0.5 + m_xPan) * asp, -0.5 + m_yPan, 0.5 + m_yPan, 2, m_distance * 2);
-	update();
-}
-
-void GLWidget::updateView()
-{
-	m_viewMatrix.setToIdentity();
-
-	double r = m_distance;
-	double angX = M_PI / 180 * m_xRot;
-	double angY = M_PI / 180 * m_yRot;
-
-	QVector3D eye(r * cos(angX) * sin(angY) + m_xLookAt, r * sin(angX) + m_yLookAt, r * cos(angX) * cos(angY) + m_zLookAt);
-	QVector3D center(m_xLookAt, m_yLookAt, m_zLookAt);
-	QVector3D up(fabs(m_xRot) == 90 ? -sin(angY + (m_xRot < 0 ? M_PI : 0)) : 0, cos(angX), fabs(m_xRot) == 90 ? -cos(angY + (m_xRot < 0 ? M_PI : 0)) : 0);
-
-	m_viewMatrix.lookAt(eye, center, up.normalized());
-
-	m_viewMatrix.translate(m_xLookAt, m_yLookAt, m_zLookAt);
-	m_viewMatrix.scale(m_zoom, m_zoom, m_zoom);
-	m_viewMatrix.translate(-m_xLookAt, -m_yLookAt, -m_zLookAt);
-
-	m_viewMatrix.rotate(-90, 1.0, 0.0, 0.0);
-	update();
-}
-
-void GLWidget::paintGL()
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-	glPointSize(2);
-
-
-	m_program->bind();
-	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
-	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
-
-	//绘制点云数据
-	m_vao.bind();
-	m_program->setUniformValue(m_colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
-	m_vao.release();
-
-	//绘制坐标轴-网格
-	m_netVao.bind();
-	m_program->setUniformValue(m_colorLoc, 0.0f, 0.0f, 0.0f, 0.5f);
-	glDrawArrays(GL_LINES, 0, (GLsizei)96);
-	m_netVao.release();
-
-	m_program->release();
-
-}
-
-void GLWidget::init_vbo(unsigned int resolution)
+void GLWidget::updateScannerVbo(unsigned int resolution)
 {
 	//更新顶点数据
 	QVector<GLfloat> vertices;
@@ -277,9 +272,9 @@ void GLWidget::init_vbo(unsigned int resolution)
 	
 
 	//更新vbo数据
-	if(!m_vbo.bind())
+	if(!m_scannerVbo.bind())
 		return;
-	m_vbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
+	m_scannerVbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
 	
 }
 
@@ -290,19 +285,16 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 	m_yLastRot = m_yRot;
 	m_xLastPan = m_xPan;
 	m_yLastPan = m_yPan;
-	qDebug("%02f", m_yRot);
-	qDebug("%02f", m_xLookAt);
+	//qDebug("%02f", m_yRot);
+	//qDebug("%02f", m_xLookAt);
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
 	if ((event->buttons() & Qt::MiddleButton && !(event->modifiers() & Qt::ShiftModifier)) || event->buttons() & Qt::LeftButton) {
 
-		//stopViewAnimation();
-
-		//m_yRot = m_yLastRot - (event->x() - m_lastPos.x()) * 0.5;
 		m_yRot = normalizeAngle( m_yLastRot - (event->x() - m_lastPos.x()) * 0.5);
-		qDebug ("%02f",m_yRot);
+		//qDebug ("%02f",m_yRot);
 		m_xRot = m_xLastRot + (event->y() - m_lastPos.y()) * 0.5;
 
 		if (m_xRot < -90) m_xRot = -90;

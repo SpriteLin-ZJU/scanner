@@ -7,6 +7,7 @@ class QComboBox;
 class QPushButton;
 class QLineEdit;
 class QSerialPort;
+class QTimer;
 
 class PrinterBox : public QWidget
 {
@@ -14,10 +15,18 @@ class PrinterBox : public QWidget
 public:
 	PrinterBox(QWidget *parent = Q_NULLPTR);
 	~PrinterBox();
+
+	void emergencyStop();
+	void stopPrinting();
+	void openFile();
 signals:
 	void updateStatus(QString&);
 private:
 	const int BUFFER_SIZE = 127;
+
+	//flag
+	bool isPrinting=false;
+
 	QList<QString> m_fileGcode;
 
 	QGroupBox* m_printGroupBox;
@@ -41,7 +50,9 @@ private:
 	void initPorts();
 	void connectPort();
 	void changeConnectState();
-	void openFile();
 	void sendManuGcode();
+	void printGcode();
+
+	void onSerialReadyRead();
 	void OnError(QString errorText);
 };

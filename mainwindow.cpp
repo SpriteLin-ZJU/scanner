@@ -14,13 +14,14 @@
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
-	createActions();
-	createMenus();
-	createStatusBar();
-
 	m_scannerBox = new ScannerBox(this);
 	m_printerBox = new PrinterBox(this);
 	m_glwidget = new GLWidget(this);
+
+	createActions();
+	createMenus();
+	createToolBars();
+	createStatusBar();
 
 	QWidget* widget = new QWidget;
 	QVBoxLayout* vlayout = new QVBoxLayout;
@@ -40,13 +41,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::createActions()
 {
-	//创建加载轮廓文件动作
-	m_loadAction = new QAction(tr("&Load"), this);
+	//创建加载打印文件动作
+	m_loadAction = new QAction(QIcon(":/picture/Resources/picture/file.png"),tr("&Load"), this);
 	m_loadAction->setShortcut(tr("Ctrl+L"));
-	m_loadAction->setStatusTip(tr("Load profiles"));
-	connect(m_loadAction, &QAction::triggered, this, &MainWindow::loadProfile);
+	m_loadAction->setStatusTip(tr("Load Gcode"));
+	connect(m_loadAction, &QAction::triggered, m_printerBox, &PrinterBox::openFile);
 
-	//创建保存轮廓文件动作
+	//创建保存文件动作
 	m_saveAction = new QAction(tr("&Save"), this);
 	m_saveAction->setShortcut(QKeySequence::Save);
 	m_saveAction->setStatusTip(tr("Save profiles"));
@@ -58,6 +59,16 @@ void MainWindow::createActions()
 	m_exitAction->setStatusTip(tr("Exit"));
 	connect(m_exitAction, &QAction::triggered, this, &MainWindow::close);
 	//test merge
+
+	//创建急停动作
+	m_emergencyStopAction = new QAction(QIcon(":/picture/Resources/picture/emergencystop.png"), tr("Emergency stop"), this);
+	m_emergencyStopAction->setStatusTip(tr("EMERGENCY STOP"));
+	connect(m_emergencyStopAction, &QAction::triggered, m_printerBox, &PrinterBox::emergencyStop);
+
+	//创建停止动作
+	m_stopPrintingAction = new QAction(QIcon(":/picture/Resources/picture/stop.png"), tr("Stop printing"),this);
+	m_stopPrintingAction->setStatusTip(tr("Stop printing"));
+	connect(m_stopPrintingAction, &QAction::triggered, m_printerBox, &PrinterBox::stopPrinting);
 }
 
 void MainWindow::createMenus()
@@ -72,6 +83,16 @@ void MainWindow::createMenus()
 
 void MainWindow::createToolBars()
 {
+	m_toolBar = new QToolBar();
+	m_toolBar->setIconSize(QSize(60, 60));
+	QWidget* spacer = new QWidget(this);
+	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	
+	m_toolBar->addAction(m_loadAction);
+	m_toolBar->addAction(m_stopPrintingAction);
+	m_toolBar->addWidget(spacer);
+	m_toolBar->addAction(m_emergencyStopAction);
+	addToolBar(m_toolBar);
 }
 
 void MainWindow::createStatusBar()
