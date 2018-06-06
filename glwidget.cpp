@@ -172,6 +172,7 @@ void GLWidget::creatNetVao()
 	m_netVao.release();
 	fillNetVertices();
 	m_netVbo.allocate(netVertices.constData(), netVertices.size() * sizeof(GLfloat));
+	m_netVbo.release();
 }
 
 void GLWidget::fillNetVertices()
@@ -275,7 +276,6 @@ void GLWidget::updateScannerVbo(unsigned int resolution)
 	if(!m_scannerVbo.bind())
 		return;
 	m_scannerVbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
-	
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
