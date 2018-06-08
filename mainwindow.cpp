@@ -2,6 +2,9 @@
 #include "printerbox.h"
 #include "mainwindow.h"
 #include "glwidget.h"
+#include "origindrawer.h"
+#include "netdrawer.h"
+#include "platformdrawer.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -33,6 +36,15 @@ MainWindow::MainWindow(QWidget *parent)
 	hlayout->addWidget(m_glwidget, 1);
 	widget->setLayout(hlayout);
 	setCentralWidget(widget);
+
+	//添加需要绘制的drawable
+	m_originDrawer = new OriginDrawer();
+	m_netDrawer = new NetDrawer();
+	m_platformDrawer = new PlatformDrawer();
+
+	m_glwidget->addDrawable(m_originDrawer);
+	m_glwidget->addDrawable(m_netDrawer);
+	m_glwidget->addDrawable(m_platformDrawer);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_glwidget, &GLWidget::updateGraph);

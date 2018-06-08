@@ -124,6 +124,9 @@
     <ClCompile Include="InterfaceLLT_2.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClCompile Include="netdrawer.cpp" />
+    <ClCompile Include="origindrawer.cpp" />
+    <ClCompile Include="platformdrawer.cpp" />
     <ClCompile Include="printerbox.cpp" />
     <ClCompile Include="scannerbox.cpp" />
     <ClCompile Include="settingsdialog.cpp" />
@@ -145,6 +148,9 @@
     <QtMoc Include="scannerbox.h" />
     <QtMoc Include="settingsdialog.h" />
     <QtMoc Include="printerbox.h" />
+    <ClInclude Include="netdrawer.h" />
+    <ClInclude Include="origindrawer.h" />
+    <ClInclude Include="platformdrawer.h" />
     <ClInclude Include="shaderdrawable.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>

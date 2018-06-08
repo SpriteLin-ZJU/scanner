@@ -18,12 +18,13 @@ public:
 	explicit ShaderDrawable();
 	~ShaderDrawable();
 
+	void update();
 	void draw(QOpenGLShaderProgram *shaderProgram);
+	bool needsUpdateGeometry() const;
 	void updateGeometry(QOpenGLShaderProgram *shaderProgram = 0);
 
 
 protected:
-
 	double m_lineWidth;
 	double m_pointSize;
 	QVector<VertexData> m_lines;
@@ -36,5 +37,6 @@ protected:
 	void init(QOpenGLShaderProgram *shaderProgram = 0);
 
 private:
+	bool m_needsUpdateGeometry;
 	QOpenGLVertexArrayObject m_vao;
 };

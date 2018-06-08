@@ -2,6 +2,7 @@
 
 ShaderDrawable::ShaderDrawable()
 {
+	m_needsUpdateGeometry = true;
 	m_lineWidth = 1.0;
 	m_pointSize = 1.0;
 }
@@ -12,6 +13,9 @@ ShaderDrawable::~ShaderDrawable()
 
 void ShaderDrawable::init(QOpenGLShaderProgram * shaderProgram)
 {
+	//注意！init函数内(创建vao或vbo之前)必须添加该函数.
+	initializeOpenGLFunctions();
+
 	m_vao.create();
 	m_vao.bind();
 	m_vbo.create();
@@ -39,27 +43,47 @@ bool ShaderDrawable::updateData()
 	return true;
 }
 
+void ShaderDrawable::update()
+{
+	m_needsUpdateGeometry = true;
+}
+
+bool ShaderDrawable::needsUpdateGeometry() const
+{
+	return m_needsUpdateGeometry;
+}
+
 void ShaderDrawable::draw(QOpenGLShaderProgram * shaderProgram)
 {
 	m_vao.bind();
+	if (!m_triangles.isEmpty()) {
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, m_triangles.count());
+	}
 	if (!m_lines.isEmpty()) {
 		glLineWidth(m_lineWidth);
-		glDrawArrays(GL_LINES, 0, m_lines.count());
+		GLenum i = glGetError();
+		glDrawArrays(GL_LINES, m_triangles.count(), m_lines.count());
 	}
 	if (!m_points.isEmpty()) {
 		glPointSize(m_pointSize);
-		glDrawArrays(GL_POINTS, m_lines.count(), m_points.count());
+		glDrawArrays(GL_POINTS, m_triangles.count()+m_lines.count(), m_points.count());
 	}
 	m_vao.release();
 }
+
 
 void ShaderDrawable::updateGeometry(QOpenGLShaderProgram * shaderProgram)
 {
 	if (!m_vao.isCreated()) init(shaderProgram);
 
+	m_vbo.bind();
 	if (updateData()) {
-		QVector<VertexData> vertexData(m_lines);
+		QVector<VertexData> vertexData(m_triangles);
+		vertexData += m_lines;
 		vertexData += m_points;
 		m_vbo.allocate(vertexData.constData(), vertexData.count() * sizeof(VertexData));
 	}
+
+	m_vbo.release();
+	m_needsUpdateGeometry = false;
 }

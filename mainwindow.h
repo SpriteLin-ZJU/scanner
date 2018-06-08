@@ -1,10 +1,14 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 
+class OriginDrawer;
+class NetDrawer;
+class PlatformDrawer;
 class ScannerBox;
 class PrinterBox;
 class GLWidget;
 class QLabel;
+
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
@@ -20,6 +24,10 @@ private:
 	void loadProfile();
 	void saveProfile();
 	void updateStatusBar(QString& status);
+
+	OriginDrawer* m_originDrawer;
+	NetDrawer* m_netDrawer;
+	PlatformDrawer* m_platformDrawer;
 
 	QLabel* m_statusLabel;
 	QAction* m_loadAction;

@@ -10,8 +10,7 @@ GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), 
 	m_program(0),
 	m_scannerVbo(QOpenGLBuffer::VertexBuffer),
-	m_scannerEbo(QOpenGLBuffer::IndexBuffer),
-	m_netVbo(QOpenGLBuffer::VertexBuffer)
+	m_scannerEbo(QOpenGLBuffer::IndexBuffer)
 {
 	updateProjection();
 	updateView();
@@ -26,7 +25,6 @@ void GLWidget::cleanup()
 {
 	makeCurrent();
 	m_scannerVbo.destroy();
-	m_netVbo.destroy();
 	delete m_program;
 	m_program = 0;
 	doneCurrent();
@@ -36,21 +34,29 @@ void GLWidget::cleanup()
 static const char *vertexShaderSource =
 "#version 430 core\n"
 "in vec3 aPos;\n"
+"in vec3 aColor;\n"
+"out vec3 ourColor;\n"
 "uniform mat4 mvpMatrix;\n"
 "uniform mat4 mvMatrix;\n"
 "void main() {\n"
 "    gl_Position = mvpMatrix * vec4(aPos,1.0);\n"
+"	 ourColor = aColor;\n"
 "}\n";
 
 //片段着色器
 static const char *fragmentShaderSource =
 "#version 430 core\n"
 "out vec4 FragColor;\n"
-"uniform vec4 ourColor;\n"
+"in vec3 ourColor;\n"
 "void main() {\n"
-"   FragColor = ourColor;\n"
+"   FragColor = vec4(ourColor,1.0);\n"
 "}\n";
 
+
+void GLWidget::addDrawable(ShaderDrawable * drawable)
+{
+	m_shaderDrawableList.append(drawable);
+}
 
 void GLWidget::initializeGL()
 {
@@ -73,12 +79,9 @@ void GLWidget::initializeGL()
 	m_program->bind();
 	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
-	m_colorLoc = m_program->uniformLocation("ourColor");
 
 	//创建点云VAO
 	creatScannerVao();
-	//创建网格VAO
-	creatNetVao();
 	//创建
 
 	m_program->release();
@@ -122,27 +125,34 @@ void GLWidget::updateView()
 
 void GLWidget::paintGL()
 {
+	//GLfloat lw[2];
+	//glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lw);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	
+	//设置反走样
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable(GL_BLEND);
+	//glEnable(GL_LINE_SMOOTH);
+	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glPointSize(2);
-
 
 	m_program->bind();
 	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
 	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
 
 	//绘制点云数据
-	m_scannerVao.bind();
-	m_program->setUniformValue(m_colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
-	glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
-	m_scannerVao.release();
+	//m_scannerVao.bind();
+	//glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
+	//m_scannerVao.release();
 
-	//绘制坐标轴-网格
-	m_netVao.bind();
-	m_program->setUniformValue(m_colorLoc, 0.0f, 0.0f, 0.0f, 0.5f);
-	glDrawArrays(GL_LINES, 0, (GLsizei)96);
-	m_netVao.release();
+	foreach(ShaderDrawable* drawable,m_shaderDrawableList)
+		if(drawable->needsUpdateGeometry()) drawable->updateGeometry(m_program);
+	foreach(ShaderDrawable *drawable, m_shaderDrawableList)
+		drawable->draw(m_program);
 
 	m_program->release();
 
@@ -159,80 +169,6 @@ void GLWidget::creatScannerVao()
 	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
 	m_program->enableAttributeArray(0);
 	m_scannerVao.release();
-}
-
-void GLWidget::creatNetVao()
-{
-	m_netVao.create();
-	m_netVao.bind();
-	m_netVbo.create();
-	m_netVbo.bind();
-	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
-	m_program->enableAttributeArray(0);
-	m_netVao.release();
-	fillNetVertices();
-	m_netVbo.allocate(netVertices.constData(), netVertices.size() * sizeof(GLfloat));
-	m_netVbo.release();
-}
-
-void GLWidget::fillNetVertices()
-{
-	for (int i = 0; i <= 10; i++) {
-		GLfloat y = -50.0f + i * 10.0f;
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(y);
-		netVertices.push_back(0.0f);
-		netVertices.push_back(30.0f);
-		netVertices.push_back(y);
-		netVertices.push_back(0.0f);
-	}
-	for (int i = 0; i <= 5; i++) {
-		GLfloat z = i * 10.0f;
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(z);
-		netVertices.push_back(30.0f);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(z);
-	}
-	//平行于y轴的网格
-	for (int i = 0; i <= 6; i++) {
-		GLfloat x = -30.0f + i * 10.0f;
-		netVertices.push_back(x);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(0.0f);
-		netVertices.push_back(x);
-		netVertices.push_back(50.0f);
-		netVertices.push_back(0.0f);
-	}
-	for (int i = 0; i <= 5; i++) {
-		GLfloat z = i * 10.0f;
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(z);
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(50.0f);
-		netVertices.push_back(z);
-	}
-	//平行于z轴的网格
-	for (int i = 0; i <= 6; i++) {
-		GLfloat x = -30.0f + i * 10.0f;
-		netVertices.push_back(x);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(0.0f);
-		netVertices.push_back(x);
-		netVertices.push_back(-50.0f);
-		netVertices.push_back(50.0f);
-	}
-	for (int i = 0; i <= 10; i++) {
-		GLfloat y = -50.0f + i * 10.0f;
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(y);
-		netVertices.push_back(0.0f);
-		netVertices.push_back(-30.0f);
-		netVertices.push_back(y);
-		netVertices.push_back(50.0f);
-	}
 }
 
 void GLWidget::updateScannerVbo(unsigned int resolution)
