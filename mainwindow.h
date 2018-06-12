@@ -4,6 +4,7 @@
 class OriginDrawer;
 class NetDrawer;
 class PlatformDrawer;
+class ScannerDrawer;
 class ScannerBox;
 class PrinterBox;
 class GLWidget;
@@ -28,6 +29,7 @@ private:
 	OriginDrawer* m_originDrawer;
 	NetDrawer* m_netDrawer;
 	PlatformDrawer* m_platformDrawer;
+	ScannerDrawer* m_scannerDrawer;
 
 	QLabel* m_statusLabel;
 	QAction* m_loadAction;

@@ -23,8 +23,7 @@ public:
 	~GLWidget();
 	void cleanup();
 
-	void updateGraph(unsigned int resolution) {
-		updateScannerVbo(resolution);
+	void updateGraph() {
 		update();
 	}
 
@@ -48,9 +47,9 @@ private:
 
 	QList<ShaderDrawable*> m_shaderDrawableList;
 	QOpenGLShaderProgram * m_program;
-	QOpenGLVertexArrayObject m_scannerVao;
-	QOpenGLBuffer m_scannerVbo;
-	QOpenGLBuffer m_scannerEbo;
+	//QOpenGLVertexArrayObject m_scannerVao;
+	//QOpenGLBuffer m_scannerVbo;
+	//QOpenGLBuffer m_scannerEbo;
 
 	double m_xRot=45, m_yRot=150, m_xLastRot=0, m_yLastRot=0;
 	double m_xPan=0, m_yPan=0, m_xLastPan=0, m_yLastPan=0;
@@ -69,13 +68,13 @@ private:
 	QMatrix4x4 m_projectionMatrix;
 	QMatrix4x4 m_viewMatrix;
 
-	void creatScannerVao();
+	//void creatScannerVao();
 
-	void updateScannerVbo(unsigned int resolution);
+	//void updateScannerVbo(unsigned int resolution);
 	double normalizeAngle(double angle);
 	void updateProjection();
 	void updateView();
 
-	int m_profileCount;
-	unsigned int m_resolution;
+	//int m_profileCount;
+	//unsigned int m_resolution;
 };

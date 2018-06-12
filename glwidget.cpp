@@ -8,9 +8,9 @@
 
 GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), 
-	m_program(0),
-	m_scannerVbo(QOpenGLBuffer::VertexBuffer),
-	m_scannerEbo(QOpenGLBuffer::IndexBuffer)
+	m_program(0)
+	//m_scannerVbo(QOpenGLBuffer::VertexBuffer),
+	//m_scannerEbo(QOpenGLBuffer::IndexBuffer)
 {
 	updateProjection();
 	updateView();
@@ -24,7 +24,7 @@ GLWidget::~GLWidget()
 void GLWidget::cleanup()
 {
 	makeCurrent();
-	m_scannerVbo.destroy();
+	//m_scannerVbo.destroy();
 	delete m_program;
 	m_program = 0;
 	doneCurrent();
@@ -81,7 +81,7 @@ void GLWidget::initializeGL()
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
 
 	//创建点云VAO
-	creatScannerVao();
+	//creatScannerVao();
 	//创建
 
 	m_program->release();
@@ -158,19 +158,7 @@ void GLWidget::paintGL()
 
 }
 
-void GLWidget::creatScannerVao()
-{
-	//创建点云VAO
-	m_scannerVao.create();
-	m_scannerVao.bind();
-	//创建顶点缓冲对象VBO
-	m_scannerVbo.create();
-	m_scannerVbo.bind();
-	m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(GLfloat) * 3);
-	m_program->enableAttributeArray(0);
-	m_scannerVao.release();
-}
-
+/*
 void GLWidget::updateScannerVbo(unsigned int resolution)
 {
 	//更新顶点数据
@@ -213,6 +201,7 @@ void GLWidget::updateScannerVbo(unsigned int resolution)
 		return;
 	m_scannerVbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
 }
+*/
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {

@@ -5,6 +5,7 @@
 #include "origindrawer.h"
 #include "netdrawer.h"
 #include "platformdrawer.h"
+#include "scannerdrawer.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -41,14 +42,17 @@ MainWindow::MainWindow(QWidget *parent)
 	m_originDrawer = new OriginDrawer();
 	m_netDrawer = new NetDrawer();
 	m_platformDrawer = new PlatformDrawer();
+	m_scannerDrawer = new ScannerDrawer();
 
 	m_glwidget->addDrawable(m_originDrawer);
 	m_glwidget->addDrawable(m_netDrawer);
 	m_glwidget->addDrawable(m_platformDrawer);
+	m_glwidget->addDrawable(m_scannerDrawer);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
-	connect(m_scannerBox, &ScannerBox::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
+	connect(m_scannerDrawer, &ScannerDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
 }
 
 void MainWindow::createActions()

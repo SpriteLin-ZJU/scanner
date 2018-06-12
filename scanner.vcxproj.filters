@@ -66,6 +66,9 @@
     <ClCompile Include="platformdrawer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="scannerdrawer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="printerbox.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="scannerdrawer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
