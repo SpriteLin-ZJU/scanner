@@ -57,7 +57,7 @@ void ShaderDrawable::draw(QOpenGLShaderProgram * shaderProgram)
 {
 	m_vao.bind();
 	if (!m_triangles.isEmpty()) {
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, m_triangles.count());
+		glDrawArrays(GL_TRIANGLES, 0, m_triangles.count());
 	}
 	if (!m_lines.isEmpty()) {
 		glLineWidth(m_lineWidth);
@@ -70,6 +70,7 @@ void ShaderDrawable::draw(QOpenGLShaderProgram * shaderProgram)
 	}
 	m_vao.release();
 }
+
 
 
 void ShaderDrawable::updateGeometry(QOpenGLShaderProgram * shaderProgram)
