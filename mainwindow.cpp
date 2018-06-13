@@ -6,6 +6,8 @@
 #include "netdrawer.h"
 #include "platformdrawer.h"
 #include "scannerdrawer.h"
+#include "gcodemanager.h"
+#include "gcodedrawer.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -20,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	m_scannerBox = new ScannerBox(this);
 	m_printerBox = new PrinterBox(this);
+	m_gcodeManager = new GcodeManager();
+	m_printerBox->setGcodeManager(m_gcodeManager);
 	m_glwidget = new GLWidget(this);
 
 	createActions();
@@ -27,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 	createToolBars();
 	createStatusBar();
 
+	//²¼¾Ö
 	QWidget* widget = new QWidget;
 	QVBoxLayout* vlayout = new QVBoxLayout;
 	vlayout->addWidget(m_scannerBox);
@@ -43,16 +48,21 @@ MainWindow::MainWindow(QWidget *parent)
 	m_netDrawer = new NetDrawer();
 	m_platformDrawer = new PlatformDrawer();
 	m_scannerDrawer = new ScannerDrawer();
+	m_gcodeDrawer = new GcodeDrawer();
+	m_gcodeDrawer->setGcodeManager(m_gcodeManager);
 
 	m_glwidget->addDrawable(m_originDrawer);
 	m_glwidget->addDrawable(m_netDrawer);
 	m_glwidget->addDrawable(m_platformDrawer);
 	m_glwidget->addDrawable(m_scannerDrawer);
+	m_glwidget->addDrawable(m_gcodeDrawer);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerDrawer, &ScannerDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_gcodeDrawer, &GcodeDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_printerBox, &PrinterBox::drawSingleGcode, m_gcodeDrawer, &GcodeDrawer::drawSingleGcode);
 }
 
 void MainWindow::createActions()

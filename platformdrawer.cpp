@@ -11,7 +11,9 @@ bool PlatformDrawer::updateData()
 		{QVector3D(-180.0,-100.0,-0.1),color},
 		{QVector3D(180.0,-100.0,-0.1),color},
 		{QVector3D(-180.0,100.0,-0.1),color},
-		{QVector3D(180.0,100.0,-0.1),color}
+		{QVector3D(180.0,-100.0,-0.1),color},
+		{QVector3D(-180.0,100.0,-0.1),color},
+		{QVector3D(180.0,100.0,-0.1),color},
 	};
 	return true;
 }

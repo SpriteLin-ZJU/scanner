@@ -15,8 +15,11 @@
 #include <QTimer>
 #include <QDeBug>
 
+#include <gcodemanager.h>
+
 PrinterBox::PrinterBox(QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent), 
+	m_gcodeManager(NULL)
 {
 
 	m_printGroupBox = new QGroupBox(tr("Printer"), this);
@@ -74,19 +77,21 @@ PrinterBox::PrinterBox(QWidget *parent) :
 
 PrinterBox::~PrinterBox()
 {
-	
+	m_gcodeManager = NULL;
 }
 
 void PrinterBox::emergencyStop()
 {
 	m_serialPort->write(QString("M112\r").toLatin1());
 	m_serialPort->flush();
+	isPrinting = false;
 }
 
 void PrinterBox::stopPrinting()
 {
-	m_fileGcode.clear();
+	m_gcodeManager->clear();
 	m_serialPort->flush();
+	isPrinting = false;
 }
 
 void PrinterBox::initPorts()
@@ -153,11 +158,11 @@ void PrinterBox::openFile()
 			return;
 		}
 
-		//将文件打开的gcode分行存入至QList<QString>中
+		//将文件打开的gcode分行存入至gcodemanager的m_fileGcode中
 		QTextStream textStream(&file);
-		m_fileGcode.clear();
+		m_gcodeManager->clear();
 		while (!textStream.atEnd())
-			m_fileGcode.append(textStream.readLine());
+			m_gcodeManager->addCommand(textStream.readLine());
 
 		QString s = "File name:" + path;
 		m_printFileLabel->setText(s);
@@ -168,6 +173,11 @@ void PrinterBox::openFile()
 		QMessageBox::warning(this, tr("Path"),
 			tr("You did not select any file."));
 	}
+}
+
+void PrinterBox::setGcodeManager(GcodeManager * manager)
+{
+	m_gcodeManager = manager;
 }
 
 void PrinterBox::sendManuGcode()
@@ -181,35 +191,36 @@ void PrinterBox::printGcode()
 	QRegExp rx("^[GMT]\\d{1,3}\\s*([XYZTSFE]\\s*-?\\d+\\.?\\d*\\s*){0,4}");
 	rx.setMinimal(false);
 
+	isPrinting = true;
+
 	//先一次性发送3条有效指令给Marlin缓存
 	if (m_printButton->isEnabled()) {
 		m_serialPort->flush();
-		for (int i = 0; i < qMin(2, m_fileGcode.size()); i++) {
+		for (int i = 0; i < qMin(2, m_gcodeManager->fileSize()); i++) {
 			int pos = 0;
-			if ((pos = rx.indexIn(m_fileGcode.at(0), pos)) != -1) {
+			if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
 				m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 				qDebug() << rx.cap(0);
-				m_fileGcode.removeFirst();
+				//将合法的已发送的Gcode添加到drawerbuffer，用于绘制打印路径。
+				m_gcodeManager->addDrawerBuffer(rx.cap(0));
 			}
 			else {
-				m_fileGcode.removeFirst();
 				i--;
 			}
 		}
 		m_printButton->setDisabled(true);
 	}
 	
-	if (!m_fileGcode.isEmpty()) {
-		isPrinting = true;
+	if (!m_gcodeManager->fileIsEmpty()) {
 		//使用正则表达式验证是否为Gcode
 		int pos = 0;
-		if ((pos = rx.indexIn(m_fileGcode.at(0), pos)) != -1) {
+		if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
 			m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 			qDebug() << rx.cap(0);
-			m_fileGcode.removeFirst();
+			//将合法的已发送的Gcode添加到drawerbuffer，用于绘制打印路径。
+			m_gcodeManager->addDrawerBuffer(rx.cap(0));
 		}
 		else {
-			m_fileGcode.removeFirst();
 			printGcode();
 		}
 	}
@@ -219,11 +230,13 @@ void PrinterBox::printGcode()
 
 void PrinterBox::onSerialReadyRead()
 {
-	while (m_serialPort->canReadLine()&&isPrinting) {
+	while (m_serialPort->canReadLine()) {
 		QString data = m_serialPort->readLine().trimmed();
 		qDebug() << data;
-		if (data == "ok")
+		if (data == "ok"&&isPrinting) {
 			printGcode();
+			emit drawSingleGcode();
+		}
 	}
 }
 

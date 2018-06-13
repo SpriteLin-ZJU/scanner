@@ -5,10 +5,12 @@ class OriginDrawer;
 class NetDrawer;
 class PlatformDrawer;
 class ScannerDrawer;
+class GcodeDrawer;
 class ScannerBox;
 class PrinterBox;
 class GLWidget;
 class QLabel;
+class GcodeManager;
 
 class MainWindow : public QMainWindow
 {
@@ -30,6 +32,7 @@ private:
 	NetDrawer* m_netDrawer;
 	PlatformDrawer* m_platformDrawer;
 	ScannerDrawer* m_scannerDrawer;
+	GcodeDrawer* m_gcodeDrawer;
 
 	QLabel* m_statusLabel;
 	QAction* m_loadAction;
@@ -41,6 +44,7 @@ private:
 	QMenu* m_fileMenu;
 	QToolBar* m_toolBar;
 
+	GcodeManager* m_gcodeManager;
 	ScannerBox* m_scannerBox;
 	PrinterBox* m_printerBox;
 	GLWidget* m_glwidget;

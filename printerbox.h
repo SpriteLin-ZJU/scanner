@@ -8,6 +8,7 @@ class QPushButton;
 class QLineEdit;
 class QSerialPort;
 class QTimer;
+class GcodeManager;
 
 class PrinterBox : public QWidget
 {
@@ -19,15 +20,17 @@ public:
 	void emergencyStop();
 	void stopPrinting();
 	void openFile();
+	void setGcodeManager(GcodeManager* manager);
 signals:
 	void updateStatus(QString&);
+	void drawSingleGcode();
 private:
 	const int BUFFER_SIZE = 127;
 
 	//flag
 	bool isPrinting=false;
 
-	QList<QString> m_fileGcode;
+	GcodeManager* m_gcodeManager;
 
 	QGroupBox* m_printGroupBox;
 	//∂Àø⁄…Ë÷√
