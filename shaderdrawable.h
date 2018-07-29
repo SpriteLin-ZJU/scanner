@@ -6,10 +6,12 @@
 #include <QOpenGLBuffer>
 #include <QOpenglVertexArrayObject>
 
+#define sNan 65536
 struct VertexData
 {
 	QVector3D position;
 	QVector3D color;
+	QVector3D normal;
 };
 
 class ShaderDrawable :protected QOpenGLFunctions
@@ -31,6 +33,8 @@ protected:
 	QVector<VertexData> m_points;
 	QVector<VertexData> m_triangles;
 	
+	QVector3D m_vectorNaN = { sNan,0,0 };
+
 	QOpenGLBuffer m_vbo;//Protected for direct vbp access 子类可以直接访问
 
 	virtual bool updateData();

@@ -24,7 +24,7 @@ bool ScannerDrawer::updateData()
 
 	for (int i = 0; i < m_profileCount; i++) {
 		for (int j = 0; j < m_resolution; j++) {
-			m_points.append({ QVector3D(vdValueX[i*m_resolution + j],(double)i*0.5,vdValueZ[i*m_resolution + j]),color });
+			m_points.append({ QVector3D(vdValueX[i*m_resolution + j],(double)i*0.5,vdValueZ[i*m_resolution + j]),color, m_vectorNaN });
 		}
 	}
 

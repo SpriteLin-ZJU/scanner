@@ -80,24 +80,28 @@ bool GcodeDrawer::updateData()
 	for (int i = 0; i < pointCircleCount; i++) {
 		//第一个三角面片
 		QVector3D point0 = changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), 0, 1).toVector3D();
-		m_triangles.append({ point0,color });
 		QVector3D point1 = changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), length, 1).toVector3D();
-		m_triangles.append({ point1,color });
 		QVector3D point2 = changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), 0, 1).toVector3D();
-		m_triangles.append({ point2,color });
+		QVector3D normal = changeMatrix * 
+			QVector4D(QVector3D::normal((point2 - point0), (point1 - point0)),1).toVector3D();	//三角面片的法向量，朝外
+		m_triangles.append({ point0,color, normal });
+		m_triangles.append({ point1,color, normal });
+		m_triangles.append({ point2,color, normal });
 		//第二个三角面片
-		m_triangles.append({ point1,color });
-		m_triangles.append({ point2,color });
 		QVector3D point3 = changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), length, 1).toVector3D();
-		m_triangles.append({ point3,color });
+		m_triangles.append({ point1,color, normal });
+		m_triangles.append({ point2,color, normal });
+		m_triangles.append({ point3,color, normal });
 		//底面
-		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),color });
-		m_triangles.append({ point0,color });
-		m_triangles.append({ point2,color });
+		normal = changeMatrix * QVector4D(0, 0, -1, 1).toVector3D();
+		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),color, normal });
+		m_triangles.append({ point0,color, normal });
+		m_triangles.append({ point2,color, normal });
 		//顶面
-		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),color });
-		m_triangles.append({ point1,color });
-		m_triangles.append({ point3,color });
+		normal = changeMatrix * QVector4D(0, 0, 1, 1).toVector3D();
+		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),color, normal });
+		m_triangles.append({ point1,color, normal });
+		m_triangles.append({ point3,color, normal });
 	}
 
 	m_lastPoint = m_targetPoint;

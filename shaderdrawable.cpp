@@ -35,6 +35,12 @@ void ShaderDrawable::init(QOpenGLShaderProgram * shaderProgram)
 	shaderProgram->setAttributeBuffer(colorLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
 	shaderProgram->enableAttributeArray(colorLocation);
 
+	offset += sizeof(QVector3D);
+
+	// Tell OpenGL programmable pipeline how to locate vertex normal data
+	int normalLocation = shaderProgram->attributeLocation("aNormal");
+	shaderProgram->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
+
 	m_vao.release();
 }
 

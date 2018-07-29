@@ -14,12 +14,12 @@ bool NetDrawer::updateData()
 	int step = 20;
 
 	for (int i = 0; i <= (xMax-xMin) / step; i++) {
-		m_lines.append({ QVector3D(i*step + xMin,yMin,0), color });
-		m_lines.append({ QVector3D(i * step + xMin,yMax,0), color });
+		m_lines.append({ QVector3D(i*step + xMin,yMin,0), color, m_vectorNaN });
+		m_lines.append({ QVector3D(i * step + xMin,yMax,0), color, m_vectorNaN });
 	}
 	for (int i = 0; i <= (yMax-yMin) / step; i++) {
-		m_lines.append({ QVector3D(xMin,i * step + yMin,0), color });
-		m_lines.append({ QVector3D(xMax,i * step + yMin,0), color });
+		m_lines.append({ QVector3D(xMin,i * step + yMin,0), color, m_vectorNaN });
+		m_lines.append({ QVector3D(xMax,i * step + yMin,0), color, m_vectorNaN });
 	}
 
 	return true;

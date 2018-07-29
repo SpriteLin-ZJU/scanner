@@ -35,6 +35,7 @@ static const char *vertexShaderSource =
 "#version 430 core\n"
 "in vec3 aPos;\n"
 "in vec3 aColor;\n"
+"in vec3 aNormal;\n"
 "out vec3 ourColor;\n"
 "uniform mat4 mvpMatrix;\n"
 "uniform mat4 mvMatrix;\n"
