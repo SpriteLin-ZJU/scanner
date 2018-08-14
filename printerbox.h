@@ -32,9 +32,10 @@ signals:
 	void stopProfileTrans();
 private:
 	const int BUFFER_SIZE = 127;
-
+	//iterator
+	QList<QString>::iterator m_gcodeIt;
 	//flag
-	bool isPrinting=false;
+	bool isPrinting = false;
 
 	GcodeManager* m_gcodeManager;
 	STLManager* m_stlManager;

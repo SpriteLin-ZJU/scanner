@@ -53,3 +53,13 @@ bool GcodeManager::fileIsEmpty()
 {
 	return m_fileGcode.isEmpty();
 }
+
+QList<QString>::iterator GcodeManager::fileBegin()
+{
+	return m_fileGcode.begin();
+}
+
+QList<QString>::iterator GcodeManager::fileEnd()
+{
+	return m_fileGcode.end();
+}

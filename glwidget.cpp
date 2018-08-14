@@ -39,12 +39,12 @@ static const char *vertexShaderSource =
 "out vec3 ObjColor;\n"
 "out vec3 Normal;\n"
 "out vec3 FragPos;\n"
-"out vec3 LightPos;\n"
 "out vec3 LightsArray[5];\n"
 "uniform mat4 mvpMatrix;\n"
 "uniform mat4 mvMatrix;\n"
 "uniform mat3 normalMatrix;\n"
-"uniform vec3 lightPos;\n"
+"uniform vec3 lightsArray[5];\n"
+
 
 "bool isNan(float val){\n"
 "	 return (val > 65535.0);\n"
@@ -58,8 +58,9 @@ static const char *vertexShaderSource =
 "	 else{\n"
 "		Normal = normalMatrix * aNormal;\n"
 "		FragPos = vec3(mvMatrix * vec4(aPos,1.0));\n"
-"		LightPos = vec3(mvMatrix * vec4(lightPos, 1.0));\n"
-"		LightsArray[0]=LightPos;\n"
+"		for(int i=0;i<5;i++){\n"
+"			LightsArray[i]=vec3(mvMatrix * vec4(lightsArray[i], 1.0));\n"
+"		}\n"
 "	 }\n"
 "}\n";
 
@@ -70,7 +71,7 @@ static const char *fragmentShaderSource =
 "in vec3 ObjColor;\n"
 "in vec3 Normal;\n"
 "in vec3 FragPos;\n"
-"in vec3 LightPos;\n"
+"in vec3 LightsArray[5];\n"
 
 "bool isNan(float val){\n"
 "	 return (val > 65535.0);\n"
@@ -81,22 +82,26 @@ static const char *fragmentShaderSource =
 "		FragColor = vec4(ObjColor,1.0);\n"
 "	else{\n"
 "		vec3 lightColor = vec3(1.0,1.0,1.0);\n"
-"		float ambientStrength=0.4;\n"
+"		float ambientStrength=0.3;\n"
 "		vec3 ambient = ambientStrength * lightColor;\n"
+"		vec3 result=ambient;\n"
 "		\n"
 "		vec3 norm = normalize(Normal);\n"
-"		vec3 lightDir = normalize(LightPos-FragPos);\n"
-"		float diff = max( dot( norm, lightDir ), 0.0 );\n"
-"		float diffuseStrength = 0.5;\n"
-"		vec3 diffuse = diffuseStrength * diff * lightColor;\n"
-"		\n"
-"		float specularStrength = 0.3;\n"
-"		vec3 viewDir = normalize(-FragPos);\n"
-"		vec3 reflectDir = reflect(-lightDir, norm);\n"
-"		float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
-"		vec3 specular = specularStrength * spec * lightColor;\n"
-"		\n"
-"		vec3 result = (ambient + diffuse + specular) * ObjColor;\n"
+"		for(int i = 0; i < 5; i++){\n"
+"			vec3 lightDir = normalize(-LightsArray[i]);\n"
+"			float diff = max( dot( norm, lightDir ), 0.0 );\n"
+"			float diffuseStrength = 0.1;\n"
+"			vec3 diffuse = diffuseStrength * diff * lightColor;\n"
+"			result+=diffuse;\n"
+"			\n"
+"			float specularStrength = 0.1;\n"
+"			vec3 viewDir = normalize(-FragPos);\n"
+"			vec3 reflectDir = reflect(-lightDir, norm);\n"
+"			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
+"			vec3 specular = specularStrength * spec * lightColor;\n"
+"			result+=specular;\n"
+"		}\n"
+"		result = result * ObjColor;\n"
 "		FragColor = vec4(result, 1.0);\n"
 "	}\n"
 "}\n";
@@ -128,7 +133,8 @@ void GLWidget::initializeGL()
 	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
 	m_normalMatrixLoc = m_program->uniformLocation("normalMatrix");
-	m_lightPosLoc = m_program->uniformLocation("lightPos");
+	m_lightsArrayLoc = m_program->uniformLocation("lightsArray");
+
 
 	//创建点云VAO
 	//creatScannerVao();
@@ -179,18 +185,11 @@ void GLWidget::updateView()
 
 void GLWidget::paintGL()
 {
-	//GLfloat lw[2];
-	//glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lw);
-
+	//清除背景
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	
-	//设置反走样
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glEnable(GL_BLEND);
-	//glEnable(GL_LINE_SMOOTH);
-	//glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
+	//点云点大小？
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 	glPointSize(2);
 
@@ -198,13 +197,9 @@ void GLWidget::paintGL()
 	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
 	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
 	m_program->setUniformValue(m_normalMatrixLoc, m_normalMatrix);
-	m_program->setUniformValue(m_lightPosLoc, m_lightPos);
+	m_program->setUniformValue(m_lightsArrayLoc, m_lightsArray[5]);
 
-	//绘制点云数据
-	//m_scannerVao.bind();
-	//glDrawArrays(GL_POINTS, 0, (GLsizei)m_profileCount*m_resolution);
-	//m_scannerVao.release();
-
+	//绘制
 	foreach(ShaderDrawable* drawable,m_shaderDrawableList)
 		if(drawable->needsUpdateGeometry()) drawable->updateGeometry(m_program);
 	foreach(ShaderDrawable *drawable, m_shaderDrawableList)

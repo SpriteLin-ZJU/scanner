@@ -9,6 +9,7 @@ OriginDrawer::OriginDrawer()
 bool OriginDrawer::updateData()
 {
 	m_lines = {
+		// X-axis
 		{ QVector3D(0, 0, 0), QVector3D(1.0, 0.0, 0.0), m_vectorNaN },
 		{ QVector3D(17, 0, 0), QVector3D(1.0, 0.0, 0.0), m_vectorNaN },
 		{ QVector3D(20, 0, 0), QVector3D(1.0, 0.0, 0.0), m_vectorNaN },

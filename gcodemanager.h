@@ -17,6 +17,8 @@ public:
 	const QString& firstGcode();
 	void removeFirstGcode();
 	bool fileIsEmpty();
+	QList<QString>::iterator fileBegin();
+	QList<QString>::iterator fileEnd();
 private:
 	QList<QString> m_fileGcode;
 	QList<QString> m_gcodeDrawerBuffer;

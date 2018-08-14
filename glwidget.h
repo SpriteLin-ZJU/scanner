@@ -47,9 +47,6 @@ private:
 
 	QList<ShaderDrawable*> m_shaderDrawableList;
 	QOpenGLShaderProgram * m_program;
-	//QOpenGLVertexArrayObject m_scannerVao;
-	//QOpenGLBuffer m_scannerVbo;
-	//QOpenGLBuffer m_scannerEbo;
 
 	double m_xRot=45, m_yRot=150, m_xLastRot=0, m_yLastRot=0;
 	double m_xPan=0, m_yPan=0, m_xLastPan=0, m_yLastPan=0;
@@ -57,25 +54,22 @@ private:
 	QPoint m_lastPos;
 	double m_zoom=0.3;
 	double m_distance=200;
-	QVector3D m_lightPos = { 0,0,300 };
+	//光照数组，上左右前后
+	QVector3D m_lightsArray[5] = { {0,0,300}, {300,0,0}, {-300,0,0}, {0,300,0}, {0,300,0} };
+
 
 	QVector<GLfloat> netVertices;
 
 	int m_mvpMatrixLoc=0;
 	int m_mvMatrixLoc=0;
 	int m_normalMatrixLoc=0;
-	int m_lightPosLoc=0;
+	int m_lightsArrayLoc = 0;
+
 	QMatrix4x4 m_projectionMatrix;
 	QMatrix4x4 m_viewMatrix;
 	QMatrix3x3 m_normalMatrix;
 
-	//void creatScannerVao();
-
-	//void updateScannerVbo(unsigned int resolution);
 	double normalizeAngle(double angle);
 	void updateProjection();
 	void updateView();
-
-	//int m_profileCount;
-	//unsigned int m_resolution;
 };
