@@ -3,6 +3,7 @@
 ShaderDrawable::ShaderDrawable()
 {
 	m_needsUpdateGeometry = true;
+	m_canSee = true;
 	m_lineWidth = 1.0;
 	m_pointSize = 1.0;
 }
@@ -40,6 +41,7 @@ void ShaderDrawable::init(QOpenGLShaderProgram * shaderProgram)
 	// Tell OpenGL programmable pipeline how to locate vertex normal data
 	int normalLocation = shaderProgram->attributeLocation("aNormal");
 	shaderProgram->setAttributeBuffer(normalLocation, GL_FLOAT, offset, 3, sizeof(VertexData));
+	shaderProgram->enableAttributeArray(normalLocation);
 
 	m_vao.release();
 }
@@ -52,6 +54,21 @@ bool ShaderDrawable::updateData()
 void ShaderDrawable::update()
 {
 	m_needsUpdateGeometry = true;
+}
+
+bool ShaderDrawable::canSee()
+{
+	return m_canSee;
+}
+
+void ShaderDrawable::showGraph()
+{
+	m_canSee = true;
+}
+
+void ShaderDrawable::hideGraph()
+{
+	m_canSee = false;
 }
 
 bool ShaderDrawable::needsUpdateGeometry() const

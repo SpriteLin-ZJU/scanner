@@ -46,6 +46,9 @@ private:
 	//传感器接口
 	CInterfaceLLT* m_scanner;
 	unsigned int m_uiResolution = 0;
+	unsigned int m_uiShutterTime = 1000; //1000us
+	unsigned int m_uiIdleTime = 3900;
+	unsigned int m_uiscanRate = 25;	//25 1/s
 	TScannerType m_tscanCONTROLType;
 	
 	std::vector<unsigned int> m_vuiInterfaces;

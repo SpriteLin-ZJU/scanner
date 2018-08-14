@@ -29,9 +29,9 @@ private:
 	//快门设置组
 	QGroupBox * m_shutterGroupBox;
 	QLabel* m_shutterTimeLabel;
-	QLabel* m_idleTimeLabel;
+	QLabel* m_scanRateLabel;
 	QSpinBox* m_shutterTime;
-	QSpinBox* m_idleTime;
+	QSpinBox* m_scanRate;
 
 	//测量区域、分辨率设置组
 	QGroupBox* m_profileGroupBox;

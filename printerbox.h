@@ -9,6 +9,7 @@ class QLineEdit;
 class QSerialPort;
 class QTimer;
 class GcodeManager;
+class STLManager;
 
 class PrinterBox : public QWidget
 {
@@ -21,9 +22,14 @@ public:
 	void stopPrinting();
 	void openFile();
 	void setGcodeManager(GcodeManager* manager);
+	void setSTLManager(STLManager* manager);
 signals:
 	void updateStatus(QString&);
 	void drawSingleGcode();
+	void drawSTLFile();
+	void setScanFeedrate(int);
+	void startProfileTrans();
+	void stopProfileTrans();
 private:
 	const int BUFFER_SIZE = 127;
 
@@ -31,6 +37,7 @@ private:
 	bool isPrinting=false;
 
 	GcodeManager* m_gcodeManager;
+	STLManager* m_stlManager;
 
 	QGroupBox* m_printGroupBox;
 	//∂Àø⁄…Ë÷√

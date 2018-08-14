@@ -50,8 +50,8 @@ void GcodeDrawer::drawSingleGcode()
 					m_targetPoint[i - 3] = m_lastPoint[i - 3];
 			}
 			//结合目标坐标及当前坐标，更新m_triangles.
-			//ShaderDrawable::update();
-			updateGeometry();
+			ShaderDrawable::update();
+			updateData();
 			emit updateGraph();	//为什么GLWidget的update()函数调用后没有立即更新图像？
 		}
 	}
@@ -76,29 +76,29 @@ bool GcodeDrawer::updateData()
 	double r = 0.2;
 	double diffRadians = 2 * M_PI / pointCircleCount;
 
-	QVector3D color = { 0,0,1 };
+	QVector3D color = { 0.1f,0.3f,0.8f };
 	for (int i = 0; i < pointCircleCount; i++) {
 		//第一个三角面片
-		QVector3D point0 = changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), 0, 1).toVector3D();
-		QVector3D point1 = changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), length, 1).toVector3D();
-		QVector3D point2 = changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), 0, 1).toVector3D();
-		QVector3D normal = changeMatrix * 
-			QVector4D(QVector3D::normal((point2 - point0), (point1 - point0)),1).toVector3D();	//三角面片的法向量，朝外
+		QVector3D point0 = (changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), 0, 1)).toVector3D();
+		QVector3D point1 = (changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), length, 1)).toVector3D();
+		QVector3D point2 = (changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), 0, 1)).toVector3D();
+		QVector3D normal = QVector3D::normal((point2 - point0), (point1 - point0));	//三角面片的法向量，朝外
+		
 		m_triangles.append({ point0,color, normal });
 		m_triangles.append({ point1,color, normal });
 		m_triangles.append({ point2,color, normal });
 		//第二个三角面片
-		QVector3D point3 = changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), length, 1).toVector3D();
+		QVector3D point3 = (changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), length, 1)).toVector3D();
 		m_triangles.append({ point1,color, normal });
 		m_triangles.append({ point2,color, normal });
 		m_triangles.append({ point3,color, normal });
-		//底面
-		normal = changeMatrix * QVector4D(0, 0, -1, 1).toVector3D();
+		//底面 注意Qt是行主序，而opengl是列主序
+		normal = ((changeMatrix.inverted().transposed()) * QVector4D(0, 0, -1,0)).toVector3D();
 		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),color, normal });
 		m_triangles.append({ point0,color, normal });
 		m_triangles.append({ point2,color, normal });
 		//顶面
-		normal = changeMatrix * QVector4D(0, 0, 1, 1).toVector3D();
+		normal = ((changeMatrix.inverted().transposed()) * QVector4D(0, 0, 1, 0)).toVector3D();
 		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),color, normal });
 		m_triangles.append({ point1,color, normal });
 		m_triangles.append({ point3,color, normal });

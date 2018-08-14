@@ -173,6 +173,13 @@ void ScannerBox::advancedSettings()
 void ScannerBox::writeScannerSettings()
 {
 	QSettings settings("ZJU", "scanner");
+	if (settings.contains("shutterTime")) {
+		m_uiResolution = settings.value("resolution").toUInt();
+		m_uiShutterTime = settings.value("shutterTime").toUInt();
+		m_uiscanRate = settings.value("scanRate").toUInt();
+	}
+	m_uiIdleTime = 1.0 / m_uiscanRate * 1000 * 1000 - m_uiShutterTime;
+
 	//设置分辨率
 	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toUInt());
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
@@ -194,13 +201,13 @@ void ScannerBox::writeScannerSettings()
 		return;
 	}
 	//设置shutter time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, 100U);
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, m_uiShutterTime/10);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_SHUTTERTIME)", m_iRetValue);
 		return;
 	}
 	//设置idle time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, 900U);
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, m_uiIdleTime/10);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_IDLETIME)", m_iRetValue);
 		return;

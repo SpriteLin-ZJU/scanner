@@ -6,7 +6,7 @@
 #include <QOpenGLBuffer>
 #include <QOpenglVertexArrayObject>
 
-#define sNan 65536
+#define sNan 65536.0
 struct VertexData
 {
 	QVector3D position;
@@ -21,6 +21,9 @@ public:
 	~ShaderDrawable();
 
 	void update();
+	bool canSee();
+	void showGraph();
+	void hideGraph();
 	void draw(QOpenGLShaderProgram *shaderProgram);
 	bool needsUpdateGeometry() const;
 	void updateGeometry(QOpenGLShaderProgram *shaderProgram = 0);
@@ -42,5 +45,6 @@ protected:
 
 private:
 	bool m_needsUpdateGeometry;
+	bool m_canSee;
 	QOpenGLVertexArrayObject m_vao;
 };

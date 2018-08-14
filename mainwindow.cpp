@@ -7,7 +7,9 @@
 #include "platformdrawer.h"
 #include "scannerdrawer.h"
 #include "gcodemanager.h"
+#include "stlmanager.h"
 #include "gcodedrawer.h"
+#include "stldrawer.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -23,7 +25,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_scannerBox = new ScannerBox(this);
 	m_printerBox = new PrinterBox(this);
 	m_gcodeManager = new GcodeManager();
+	m_stlManager = new STLManager();
 	m_printerBox->setGcodeManager(m_gcodeManager);
+	m_printerBox->setSTLManager(m_stlManager);
 	m_glwidget = new GLWidget(this);
 
 	createActions();
@@ -50,19 +54,26 @@ MainWindow::MainWindow(QWidget *parent)
 	m_scannerDrawer = new ScannerDrawer();
 	m_gcodeDrawer = new GcodeDrawer();
 	m_gcodeDrawer->setGcodeManager(m_gcodeManager);
+	m_stlDrawer = new STLDrawer();
+	m_stlDrawer->setSTLManager(m_stlManager);
 
 	m_glwidget->addDrawable(m_originDrawer);
 	m_glwidget->addDrawable(m_netDrawer);
 	m_glwidget->addDrawable(m_platformDrawer);
 	m_glwidget->addDrawable(m_scannerDrawer);
 	m_glwidget->addDrawable(m_gcodeDrawer);
+	m_glwidget->addDrawable(m_stlDrawer);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerDrawer, &ScannerDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_gcodeDrawer, &GcodeDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_stlDrawer, &STLDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_printerBox, &PrinterBox::drawSingleGcode, m_gcodeDrawer, &GcodeDrawer::drawSingleGcode);
+	connect(m_printerBox, &PrinterBox::drawSTLFile, m_stlDrawer, &STLDrawer::drawSTLFile);
+	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerDrawer, &ScannerDrawer::setScanFeedrate);
+	connect(m_printerBox, &PrinterBox::startProfileTrans, m_scannerBox, &ScannerBox::startProfileTrans);
 }
 
 void MainWindow::createActions()

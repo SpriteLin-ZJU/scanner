@@ -57,16 +57,17 @@ private:
 	QPoint m_lastPos;
 	double m_zoom=0.3;
 	double m_distance=200;
+	QVector3D m_lightPos = { 0,0,300 };
 
 	QVector<GLfloat> netVertices;
 
 	int m_mvpMatrixLoc=0;
 	int m_mvMatrixLoc=0;
-	int m_colorLoc=0;
 	int m_normalMatrixLoc=0;
 	int m_lightPosLoc=0;
 	QMatrix4x4 m_projectionMatrix;
 	QMatrix4x4 m_viewMatrix;
+	QMatrix3x3 m_normalMatrix;
 
 	//void creatScannerVao();
 

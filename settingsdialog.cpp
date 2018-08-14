@@ -47,7 +47,7 @@ void SettingsDialog::readSettings()
 		return;
 	//读取参数
 	m_shutterTime->setValue(settings.value("shutterTime").toUInt());
-	m_idleTime->setValue(settings.value("idleTime").toUInt());
+	m_scanRate->setValue(settings.value("scanRate").toUInt());
 	m_resolutionComBox->setCurrentIndex(m_resolutionComBox->findText(settings.value("resolution").toString()));
 }
 
@@ -55,7 +55,7 @@ void SettingsDialog::writeSettings()
 {
 	QSettings settings("ZJU", "scanner");
 	settings.setValue("shutterTime", m_shutterTime->value());
-	settings.setValue("idleTime", m_idleTime->value());
+	settings.setValue("scanRate", m_scanRate->value());
 	settings.setValue("resolution", m_resolutionComBox->currentText().toUInt());
 	
 	settings.sync();
@@ -66,27 +66,27 @@ QWidget * SettingsDialog::createGeneralTabWidget()
 	//创建快门时间设置框
 	m_shutterTimeLabel = new QLabel(tr("Shutter time: "), this);
 	m_shutterTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-	m_idleTimeLabel = new QLabel(tr("Idle time: "), this);
-	m_idleTimeLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+	m_scanRateLabel = new QLabel(tr("Scan rate: "), this);
+	m_scanRateLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 	m_shutterTime = new QSpinBox(this);
 	m_shutterTime->setSingleStep(10);
 	m_shutterTime->setRange(1, 2000);
 	m_shutterTime->setSuffix(" us");
 	m_shutterTime->setAlignment(Qt::AlignRight);
-	m_idleTime = new QSpinBox(this);
-	m_idleTime->setSingleStep(10);
-	m_idleTime->setRange(1, 2000);
-	m_idleTime->setSuffix(" us");
-	m_idleTime->setAlignment(Qt::AlignRight);
+	m_scanRate = new QSpinBox(this);
+	m_scanRate->setSingleStep(1);
+	m_scanRate->setRange(1, 500);
+	m_scanRate->setSuffix(" 1/s");
+	m_scanRate->setAlignment(Qt::AlignRight);
 	m_shutterGroupBox = new QGroupBox(tr("ShutterTime"), this);
 	//创建快门时间设置框布局
 	QHBoxLayout *shutterGroupLayout = new QHBoxLayout;
 	shutterGroupLayout->addWidget(m_shutterTimeLabel);
 	shutterGroupLayout->addStretch();
 	shutterGroupLayout->addWidget(m_shutterTime);
-	shutterGroupLayout->addWidget(m_idleTimeLabel);
+	shutterGroupLayout->addWidget(m_scanRateLabel);
 	shutterGroupLayout->addStretch();
-	shutterGroupLayout->addWidget(m_idleTime);
+	shutterGroupLayout->addWidget(m_scanRate);
 	m_shutterGroupBox->setLayout(shutterGroupLayout);
 
 	//创建Profile测量设置框

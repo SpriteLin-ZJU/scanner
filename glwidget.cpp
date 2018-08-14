@@ -36,21 +36,69 @@ static const char *vertexShaderSource =
 "in vec3 aPos;\n"
 "in vec3 aColor;\n"
 "in vec3 aNormal;\n"
-"out vec3 ourColor;\n"
+"out vec3 ObjColor;\n"
+"out vec3 Normal;\n"
+"out vec3 FragPos;\n"
+"out vec3 LightPos;\n"
+"out vec3 LightsArray[5];\n"
 "uniform mat4 mvpMatrix;\n"
 "uniform mat4 mvMatrix;\n"
+"uniform mat3 normalMatrix;\n"
+"uniform vec3 lightPos;\n"
+
+"bool isNan(float val){\n"
+"	 return (val > 65535.0);\n"
+"}\n"
+
 "void main() {\n"
 "    gl_Position = mvpMatrix * vec4(aPos,1.0);\n"
-"	 ourColor = aColor;\n"
+"	 ObjColor = aColor;\n"
+"	 if( isNan(aNormal.x) )\n"
+"		Normal = aNormal;\n"
+"	 else{\n"
+"		Normal = normalMatrix * aNormal;\n"
+"		FragPos = vec3(mvMatrix * vec4(aPos,1.0));\n"
+"		LightPos = vec3(mvMatrix * vec4(lightPos, 1.0));\n"
+"		LightsArray[0]=LightPos;\n"
+"	 }\n"
 "}\n";
 
 //片段着色器
 static const char *fragmentShaderSource =
 "#version 430 core\n"
 "out vec4 FragColor;\n"
-"in vec3 ourColor;\n"
+"in vec3 ObjColor;\n"
+"in vec3 Normal;\n"
+"in vec3 FragPos;\n"
+"in vec3 LightPos;\n"
+
+"bool isNan(float val){\n"
+"	 return (val > 65535.0);\n"
+"}\n"
+
 "void main() {\n"
-"   FragColor = vec4(ourColor,1.0);\n"
+"	if( isNan(Normal.x) )\n"
+"		FragColor = vec4(ObjColor,1.0);\n"
+"	else{\n"
+"		vec3 lightColor = vec3(1.0,1.0,1.0);\n"
+"		float ambientStrength=0.4;\n"
+"		vec3 ambient = ambientStrength * lightColor;\n"
+"		\n"
+"		vec3 norm = normalize(Normal);\n"
+"		vec3 lightDir = normalize(LightPos-FragPos);\n"
+"		float diff = max( dot( norm, lightDir ), 0.0 );\n"
+"		float diffuseStrength = 0.5;\n"
+"		vec3 diffuse = diffuseStrength * diff * lightColor;\n"
+"		\n"
+"		float specularStrength = 0.3;\n"
+"		vec3 viewDir = normalize(-FragPos);\n"
+"		vec3 reflectDir = reflect(-lightDir, norm);\n"
+"		float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
+"		vec3 specular = specularStrength * spec * lightColor;\n"
+"		\n"
+"		vec3 result = (ambient + diffuse + specular) * ObjColor;\n"
+"		FragColor = vec4(result, 1.0);\n"
+"	}\n"
 "}\n";
 
 
@@ -72,7 +120,6 @@ void GLWidget::initializeGL()
 		return;
 	if (!m_program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource))
 		return;
-	m_program->bindAttributeLocation("aPos", 0);
 	if (!m_program->link())
 		return;
 	
@@ -80,6 +127,8 @@ void GLWidget::initializeGL()
 	m_program->bind();
 	m_mvpMatrixLoc = m_program->uniformLocation("mvpMatrix");
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
+	m_normalMatrixLoc = m_program->uniformLocation("normalMatrix");
+	m_lightPosLoc = m_program->uniformLocation("lightPos");
 
 	//创建点云VAO
 	//creatScannerVao();
@@ -121,6 +170,10 @@ void GLWidget::updateView()
 	m_viewMatrix.translate(-m_xLookAt, -m_yLookAt, -m_zLookAt);
 
 	m_viewMatrix.rotate(-90, 1.0, 0.0, 0.0);
+
+	//计算view矩阵的左上角的逆矩阵的转置矩阵
+	m_normalMatrix = m_viewMatrix.normalMatrix();
+
 	update();
 }
 
@@ -144,6 +197,8 @@ void GLWidget::paintGL()
 	m_program->bind();
 	m_program->setUniformValue(m_mvpMatrixLoc, m_projectionMatrix * m_viewMatrix);
 	m_program->setUniformValue(m_mvMatrixLoc, m_viewMatrix);
+	m_program->setUniformValue(m_normalMatrixLoc, m_normalMatrix);
+	m_program->setUniformValue(m_lightPosLoc, m_lightPos);
 
 	//绘制点云数据
 	//m_scannerVao.bind();
@@ -153,7 +208,7 @@ void GLWidget::paintGL()
 	foreach(ShaderDrawable* drawable,m_shaderDrawableList)
 		if(drawable->needsUpdateGeometry()) drawable->updateGeometry(m_program);
 	foreach(ShaderDrawable *drawable, m_shaderDrawableList)
-		drawable->draw(m_program);
+		if(drawable->canSee()) drawable->draw(m_program);
 
 	m_program->release();
 

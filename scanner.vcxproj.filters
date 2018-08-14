@@ -75,6 +75,12 @@
     <ClCompile Include="gcodedrawer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stldrawer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stlmanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -99,6 +105,12 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="gcodedrawer.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="stldrawer.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="stlmanager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

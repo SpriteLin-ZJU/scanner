@@ -14,12 +14,15 @@
 #include <QRegexp>
 #include <QTimer>
 #include <QDeBug>
+#include <QSettings>
 
-#include <gcodemanager.h>
+#include "gcodemanager.h"
+#include "stlmanager.h"
 
 PrinterBox::PrinterBox(QWidget *parent) :
 	QWidget(parent), 
-	m_gcodeManager(NULL)
+	m_gcodeManager(NULL),
+	m_stlManager(NULL)
 {
 
 	m_printGroupBox = new QGroupBox(tr("Printer"), this);
@@ -41,7 +44,7 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_printButton = new QPushButton(tr("Print"), this);
 	m_printButton->setDisabled(true);
 
-	//²¼¾Ö
+	//ï¿½ï¿½ï¿½ï¿½
 	QGridLayout* printerBoxLayout = new QGridLayout;
 	printerBoxLayout->addWidget(m_portLabel, 0, 0, 1, 1);
 	printerBoxLayout->addWidget(m_portComboBox, 0, 1, 1, 1);
@@ -65,7 +68,7 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_serialPort = new QSerialPort(this);
 	initPorts();
 
-	//ÐÅºÅ²Û
+	//ï¿½ÅºÅ²ï¿½
 	connect(m_refreshButton, &QPushButton::clicked, this, &PrinterBox::initPorts);
 	connect(m_printConnectButton, &QPushButton::clicked, this, &PrinterBox::changeConnectState);
 	connect(m_openFileButton, &QPushButton::clicked, this, &PrinterBox::openFile);
@@ -78,6 +81,7 @@ PrinterBox::PrinterBox(QWidget *parent) :
 PrinterBox::~PrinterBox()
 {
 	m_gcodeManager = NULL;
+	m_stlManager = NULL;
 }
 
 void PrinterBox::emergencyStop()
@@ -96,9 +100,9 @@ void PrinterBox::stopPrinting()
 
 void PrinterBox::initPorts()
 {
-	//Çå¿Õµ±Ç°¶Ë¿ÚÁÐ±í
+	//ï¿½ï¿½Õµï¿½Ç°ï¿½Ë¿ï¿½ï¿½Ð±ï¿½
 	m_portComboBox->clear();
-	//²éÑ¯ÒÑÁ¬½Ó¿É¹©Ê¹ÓÃµÄ¶Ë¿Ú
+	//ï¿½ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿É¹ï¿½Ê¹ï¿½ÃµÄ¶Ë¿ï¿½
 	foreach(const QSerialPortInfo &portInfo, QSerialPortInfo::availablePorts())
 	{
 		QSerialPort serial;
@@ -109,7 +113,7 @@ void PrinterBox::initPorts()
 		}
 	}
 
-	//³õÊ¼»¯²¨ÌØÂÊ
+	//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if (m_baudComboBox->currentIndex() == -1) {
 		m_baudComboBox->clear();
 		QStringList baudList;
@@ -149,25 +153,48 @@ void PrinterBox::changeConnectState()
 
 void PrinterBox::openFile()
 {
-	QString path = QFileDialog::getOpenFileName(this, tr("Open File"), ".", "*.gcode");
+	QSettings settings("ZJU", "scanner");
+	QString lastPath = settings.value("lastFilePath").toString();
+
+	QString path = QFileDialog::getOpenFileName(this, tr("Open File"), lastPath, "*.gcode;;*.stl");
 	if (!path.isEmpty()) {
+		
+		//ä¿å­˜ä¸Šæ¬¡æ‰“å¼€ç›®å½•
+		int i = path.lastIndexOf('/');
+		QString rootPath = path.left(i);
+		settings.setValue("lastFilePath", rootPath);
+
+		//æ‰“å¼€æ–‡ä»¶
 		QFile file(path);
 		if (!file.open(QIODevice::ReadOnly)) {
 			QMessageBox::warning(this, tr("Read File"),
 				tr("Cannot open file:\n%1").arg(path));
 			return;
 		}
-
-		//½«ÎÄ¼þ´ò¿ªµÄgcode·ÖÐÐ´æÈëÖÁgcodemanagerµÄm_fileGcodeÖÐ
-		QTextStream textStream(&file);
+		//æ¸…ç©ºä¹‹å‰stlåŠgcode
+		m_stlManager->clear();
 		m_gcodeManager->clear();
-		while (!textStream.atEnd())
-			m_gcodeManager->addCommand(textStream.readLine());
+		//åˆ¤æ–­æ–‡ä»¶æ ¼å¼
+		//å¦‚æžœæ˜¯STLæ–‡ä»¶
+		if (QFileInfo(file).suffix() == "STL") {
+			QTextStream textStream(&file);
+			while (!textStream.atEnd())
+				m_stlManager->addLine(textStream.readLine());
+			m_stlManager->fileToPoint();
+			emit drawSTLFile();
+		}
+		//å¦‚æžœæ‰“å¼€çš„ä¸ºGcodeæ–‡ä»¶
+		else if (QFileInfo(file).suffix() == "gcode") {
+			QTextStream textStream(&file);
+			while (!textStream.atEnd())
+				m_gcodeManager->addCommand(textStream.readLine());
+			if (m_printConnectButton->text() == "Disconnect")
+				m_printButton->setEnabled(true);
+		}
 
 		QString s = "File name:" + path;
 		m_printFileLabel->setText(s);
-		if (m_printConnectButton->text() == "Disconnect")
-			m_printButton->setEnabled(true);
+		
 	}
 	else {
 		QMessageBox::warning(this, tr("Path"),
@@ -178,6 +205,11 @@ void PrinterBox::openFile()
 void PrinterBox::setGcodeManager(GcodeManager * manager)
 {
 	m_gcodeManager = manager;
+}
+
+void PrinterBox::setSTLManager(STLManager * manager)
+{
+	m_stlManager = manager;
 }
 
 void PrinterBox::sendManuGcode()
@@ -193,7 +225,7 @@ void PrinterBox::printGcode()
 
 	isPrinting = true;
 
-	//ÏÈÒ»´ÎÐÔ·¢ËÍ3ÌõÓÐÐ§Ö¸Áî¸øMarlin»º´æ
+	//å…ˆå‘é€ä¸‰æ¡æŒ‡ä»¤
 	if (m_printButton->isEnabled()) {
 		m_serialPort->flush();
 		for (int i = 0; i < qMin(2, m_gcodeManager->fileSize()); i++) {
@@ -201,7 +233,7 @@ void PrinterBox::printGcode()
 			if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
 				m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 				qDebug() << rx.cap(0);
-				//½«ºÏ·¨µÄÒÑ·¢ËÍµÄGcodeÌí¼Óµ½drawerbuffer£¬ÓÃÓÚ»æÖÆ´òÓ¡Â·¾¶¡£
+				//å¹¶å­˜å…¥drawerbuffer
 				m_gcodeManager->addDrawerBuffer(rx.cap(0));
 			}
 			else {
@@ -212,12 +244,12 @@ void PrinterBox::printGcode()
 	}
 	
 	if (!m_gcodeManager->fileIsEmpty()) {
-		//Ê¹ÓÃÕýÔò±í´ïÊ½ÑéÖ¤ÊÇ·ñÎªGcode
+		//send gcode
 		int pos = 0;
 		if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
 			m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 			qDebug() << rx.cap(0);
-			//½«ºÏ·¨µÄÒÑ·¢ËÍµÄGcodeÌí¼Óµ½drawerbuffer£¬ÓÃÓÚ»æÖÆ´òÓ¡Â·¾¶¡£
+			//add sended gcode to drawerbuffer
 			m_gcodeManager->addDrawerBuffer(rx.cap(0));
 		}
 		else {
@@ -237,6 +269,22 @@ void PrinterBox::onSerialReadyRead()
 			printGcode();
 			emit drawSingleGcode();
 		}
+		continue;
+		//begin scan, set feedrate
+		//e.g:"feedrate:1500"
+		QRegExp rx("feedrate:(\\d+)");
+		int pos = 0;
+		if ((pos = rx.indexIn(data,pos)) != -1) {
+			emit setScanFeedrate(rx.cap(1).toInt());
+		}
+		else if (data == "scanstart") {
+			emit startProfileTrans();
+		}
+
+		else if (data == "scanstop") {
+			emit stopProfileTrans();
+		}
+
 	}
 }
 
