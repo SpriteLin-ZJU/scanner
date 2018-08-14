@@ -44,7 +44,7 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_printButton = new QPushButton(tr("Print"), this);
 	m_printButton->setDisabled(true);
 
-	//����
+	//布局
 	QGridLayout* printerBoxLayout = new QGridLayout;
 	printerBoxLayout->addWidget(m_portLabel, 0, 0, 1, 1);
 	printerBoxLayout->addWidget(m_portComboBox, 0, 1, 1, 1);
@@ -68,7 +68,7 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_serialPort = new QSerialPort(this);
 	initPorts();
 
-	//�źŲ�
+	//信号槽
 	connect(m_refreshButton, &QPushButton::clicked, this, &PrinterBox::initPorts);
 	connect(m_printConnectButton, &QPushButton::clicked, this, &PrinterBox::changeConnectState);
 	connect(m_openFileButton, &QPushButton::clicked, this, &PrinterBox::openFile);
@@ -91,18 +91,20 @@ void PrinterBox::emergencyStop()
 	isPrinting = false;
 }
 
+//停止打印
 void PrinterBox::stopPrinting()
 {
-	m_gcodeManager->clear();
+	m_printButton->setEnabled(true);
 	m_serialPort->flush();
 	isPrinting = false;
 }
 
+//初始化串口
 void PrinterBox::initPorts()
 {
-	//��յ�ǰ�˿��б�
+	//清除之前的串口
 	m_portComboBox->clear();
-	//��ѯ�����ӿɹ�ʹ�õĶ˿�
+	//搜索串口
 	foreach(const QSerialPortInfo &portInfo, QSerialPortInfo::availablePorts())
 	{
 		QSerialPort serial;
@@ -113,12 +115,13 @@ void PrinterBox::initPorts()
 		}
 	}
 
-	//��ʼ��������
+	//设置波特率
 	if (m_baudComboBox->currentIndex() == -1) {
 		m_baudComboBox->clear();
 		QStringList baudList;
 		baudList << "4800" << "9600" << "14400" << "19200" << "115200"<<"250000";
 		m_baudComboBox->addItems(baudList);
+		m_baudComboBox->setCurrentText("115200");
 	}
 }
 
@@ -139,6 +142,7 @@ void PrinterBox::connectPort()
 	}
 }
 
+//connectButton的槽函数
 void PrinterBox::changeConnectState()
 {
 	if (m_printConnectButton->text() == "Connect")
@@ -212,25 +216,27 @@ void PrinterBox::setSTLManager(STLManager * manager)
 	m_stlManager = manager;
 }
 
+//发送手动指令
 void PrinterBox::sendManuGcode()
 {
 	m_serialPort->write((m_manuCodeEdit->text()+"\r").toLatin1());
 	m_manuCodeEdit->clear();
 }
 
+//当按下print按钮时，开始向打印机传输gcode，当遇到“ok”并且“isPrinting=true”时，调用此函数。
 void PrinterBox::printGcode()
 {
 	QRegExp rx("^[GMT]\\d{1,3}\\s*([XYZTSFE]\\s*-?\\d+\\.?\\d*\\s*){0,4}");
 	rx.setMinimal(false);
 
 	isPrinting = true;
-
 	//先发送三条指令
 	if (m_printButton->isEnabled()) {
 		m_serialPort->flush();
+		m_gcodeIt = m_gcodeManager->fileBegin();	//指向gcode文件的迭代器
 		for (int i = 0; i < qMin(2, m_gcodeManager->fileSize()); i++) {
 			int pos = 0;
-			if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
+			if ((pos = rx.indexIn(*m_gcodeIt, pos)) != -1) {
 				m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 				qDebug() << rx.cap(0);
 				//并存入drawerbuffer
@@ -239,14 +245,16 @@ void PrinterBox::printGcode()
 			else {
 				i--;
 			}
+			m_gcodeIt++;
 		}
 		m_printButton->setDisabled(true);
 	}
-	
-	if (!m_gcodeManager->fileIsEmpty()) {
+	//如果文件未打印完成，继续打印
+	if (m_gcodeIt != m_gcodeManager->fileEnd()) {
 		//send gcode
+		m_gcodeIt++;
 		int pos = 0;
-		if ((pos = rx.indexIn(m_gcodeManager->takeFirstGcode(), pos)) != -1) {
+		if ((pos = rx.indexIn(*m_gcodeIt, pos)) != -1) {
 			m_serialPort->write((rx.cap(0) + "\r").toLatin1());
 			qDebug() << rx.cap(0);
 			//add sended gcode to drawerbuffer
@@ -256,8 +264,12 @@ void PrinterBox::printGcode()
 			printGcode();
 		}
 	}
-	else
+	//文件打印完成
+	else {
 		isPrinting = false;
+		if (m_printConnectButton->text() == "Disconnect")
+			m_printButton->setEnabled(true);
+	}
 }
 
 void PrinterBox::onSerialReadyRead()
@@ -268,8 +280,8 @@ void PrinterBox::onSerialReadyRead()
 		if (data == "ok"&&isPrinting) {
 			printGcode();
 			emit drawSingleGcode();
+			continue;
 		}
-		continue;
 		//begin scan, set feedrate
 		//e.g:"feedrate:1500"
 		QRegExp rx("feedrate:(\\d+)");
