@@ -61,6 +61,7 @@ void SettingsDialog::writeSettings()
 	settings.sync();
 }
 
+
 QWidget * SettingsDialog::createGeneralTabWidget()
 {
 	//创建快门时间设置框

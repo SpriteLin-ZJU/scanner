@@ -28,6 +28,12 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\Dialogs">
+      <UniqueIdentifier>{e828c23a-e1bd-42aa-a08d-ca53fe75aa0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Diaglogs">
+      <UniqueIdentifier>{c3f00776-34e6-4f40-837b-174b1081c70a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -43,9 +49,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scannerbox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="settingsdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="glwidget.cpp">
@@ -81,12 +84,15 @@
     <ClCompile Include="stlmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="settingsdialog.cpp">
+      <Filter>Source Files\Diaglogs</Filter>
+    </ClCompile>
+    <ClCompile Include="stlmovedialog.cpp">
+      <Filter>Source Files\Diaglogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="settingsdialog.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="glwidget.h">
@@ -112,6 +118,12 @@
     </QtMoc>
     <QtMoc Include="stlmanager.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="settingsdialog.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </QtMoc>
+    <QtMoc Include="stlmovedialog.h">
+      <Filter>Header Files\Dialogs</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

@@ -18,6 +18,7 @@
 #include <QLayout>
 #include <QScreen>
 #include <QLabel>
+#include "stlmovedialog.h"
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -64,6 +65,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_glwidget->addDrawable(m_gcodeDrawer);
 	m_glwidget->addDrawable(m_stlDrawer);
 
+	//dailog
+	m_stlMoveDialog = new STLMoveDialog(this);
+
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
@@ -72,8 +76,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_stlDrawer, &STLDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_printerBox, &PrinterBox::drawSingleGcode, m_gcodeDrawer, &GcodeDrawer::drawSingleGcode);
 	connect(m_printerBox, &PrinterBox::drawSTLFile, m_stlDrawer, &STLDrawer::drawSTLFile);
+	connect(m_stlManager, &STLManager::drawSTLPoint, m_stlDrawer, &STLDrawer::drawSTLFile);
 	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerDrawer, &ScannerDrawer::setScanFeedrate);
 	connect(m_printerBox, &PrinterBox::startProfileTrans, m_scannerBox, &ScannerBox::startProfileTrans);
+	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
 }
 
 void MainWindow::createActions()
@@ -95,7 +101,6 @@ void MainWindow::createActions()
 	m_exitAction->setShortcut(tr("Ctrl+Q"));
 	m_exitAction->setStatusTip(tr("Exit"));
 	connect(m_exitAction, &QAction::triggered, this, &MainWindow::close);
-	//test merge
 
 	//创建急停动作
 	m_emergencyStopAction = new QAction(QIcon(":/picture/Resources/picture/emergencystop.png"), tr("Emergency stop"), this);
@@ -106,6 +111,20 @@ void MainWindow::createActions()
 	m_stopPrintingAction = new QAction(QIcon(":/picture/Resources/picture/stop.png"), tr("Stop printing"),this);
 	m_stopPrintingAction->setStatusTip(tr("Stop printing"));
 	connect(m_stopPrintingAction, &QAction::triggered, m_printerBox, &PrinterBox::stopPrinting);
+
+	//STL相关操作
+	//创建移动操作
+	m_STLMoveAction = new QAction(QIcon(":/picture/Resources/picture/move.png"), tr("Move STL Model"), this);
+	m_STLMoveAction->setStatusTip(tr("Move STL Model"));
+	connect(m_STLMoveAction, &QAction::triggered, this, &MainWindow::openMoveDialog);
+
+	//创建旋转操作
+	m_STLRotateAction = new QAction(QIcon(":/picture/Resources/picture/rotate.png"), tr("Rotate STL Model"), this);
+	m_STLRotateAction->setStatusTip(tr("Rotate STL Model"));
+
+	//创建对中操作
+	m_STLCentreAction = new QAction(QIcon(":/picture/Resources/picture/centre.png"), tr("Centre STL Model"), this);
+	m_STLCentreAction->setStatusTip(tr("Centre STL Model"));
 }
 
 void MainWindow::createMenus()
@@ -120,7 +139,8 @@ void MainWindow::createMenus()
 
 void MainWindow::createToolBars()
 {
-	m_toolBar = new QToolBar();
+	//上方工具栏：打开文件、停止打印、急停
+	m_toolBar = new QToolBar(this);
 	m_toolBar->setIconSize(QSize(60, 60));
 	QWidget* spacer = new QWidget(this);
 	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -130,6 +150,15 @@ void MainWindow::createToolBars()
 	m_toolBar->addWidget(spacer);
 	m_toolBar->addAction(m_emergencyStopAction);
 	addToolBar(m_toolBar);
+
+	//STL相关工具栏：移动、旋转、对中STL模型
+	m_rightToolBar = new QToolBar(this);
+	m_rightToolBar->setIconSize(QSize(30, 30));
+	m_rightToolBar->addAction(m_STLMoveAction);
+	m_rightToolBar->addAction(m_STLRotateAction);
+	m_rightToolBar->addAction(m_STLCentreAction);
+	m_rightToolBar->setStyleSheet("border:none;");
+	addToolBar(Qt::RightToolBarArea,m_rightToolBar);
 }
 
 void MainWindow::createStatusBar()
@@ -145,6 +174,12 @@ void MainWindow::loadProfile()
 
 void MainWindow::saveProfile()
 {
+}
+
+void MainWindow::openMoveDialog()
+{
+	m_stlMoveDialog->setMoveValue(m_stlManager->getMoveValue());
+	m_stlMoveDialog->show();
 }
 
 void MainWindow::updateStatusBar(QString & status)

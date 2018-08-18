@@ -19,6 +19,7 @@ public:
 
 	void readSettings();
 	void writeSettings();
+
 private:
 	QWidget* createGeneralTabWidget();
 	QWidget* createInterfaceTabWidget();

@@ -70,7 +70,8 @@ bool GcodeDrawer::updateData()
 	QMatrix4x4 changeMatrix;
 	changeMatrix.translate(m_lastPoint);
 	changeMatrix.rotate(90.0f, crossProduct);	//注意，相当于translate*rotate*point，根据左乘原则，先旋转再平移。
-	
+	QMatrix4x4 normalMatrix;
+	normalMatrix = QMatrix4x4(changeMatrix.normalMatrix());
 	//载入圆柱各点坐标
 	int pointCircleCount=6;
 	double r = 0.2;
@@ -93,12 +94,12 @@ bool GcodeDrawer::updateData()
 		m_triangles.append({ point2,color, normal });
 		m_triangles.append({ point3,color, normal });
 		//底面 注意Qt是行主序，而opengl是列主序
-		normal = ((changeMatrix.inverted().transposed()) * QVector4D(0, 0, -1,0)).toVector3D();
+		normal = normalMatrix * QVector3D(0, 0, -1);
 		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),color, normal });
 		m_triangles.append({ point0,color, normal });
 		m_triangles.append({ point2,color, normal });
 		//顶面
-		normal = ((changeMatrix.inverted().transposed()) * QVector4D(0, 0, 1, 0)).toVector3D();
+		normal = normalMatrix * QVector3D(0, 0, 1);
 		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),color, normal });
 		m_triangles.append({ point1,color, normal });
 		m_triangles.append({ point3,color, normal });

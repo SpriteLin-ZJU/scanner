@@ -9,8 +9,6 @@
 GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), 
 	m_program(0)
-	//m_scannerVbo(QOpenGLBuffer::VertexBuffer),
-	//m_scannerEbo(QOpenGLBuffer::IndexBuffer)
 {
 	updateProjection();
 	updateView();
@@ -24,7 +22,6 @@ GLWidget::~GLWidget()
 void GLWidget::cleanup()
 {
 	makeCurrent();
-	//m_scannerVbo.destroy();
 	delete m_program;
 	m_program = 0;
 	doneCurrent();
@@ -209,50 +206,6 @@ void GLWidget::paintGL()
 
 }
 
-/*
-void GLWidget::updateScannerVbo(unsigned int resolution)
-{
-	//更新顶点数据
-	QVector<GLfloat> vertices;
-
-	m_profileCount = vdValueX.size() / resolution;
-	m_resolution = resolution;
-
-	double zMin, zMax;
-	bool firstFlag=false;
-	for (auto it = vdValueZ.cbegin(); it != vdValueZ.cend(); it++) {
-		if (*it >= 70.0 && *it <= 120.0) {
-			//确定第一个有效数据
-			if (!firstFlag) {
-				zMin = zMax = *it;
-				firstFlag = true;
-			}
-			//找出最大最小值
-			if (*it < zMin) 
-				zMin = *it;
-			else if (*it > zMin)
-				zMax = *it;
-		}
-	}
-
-	double zMid = (zMax + zMin) / 2.0;
-	for (int i = 0; i < m_profileCount; i++) {
-		for (int j = 0; j < resolution; j++) {
-			vertices.push_back(vdValueX[i*resolution + j]);
-			vertices.push_back(i-m_profileCount/2.0);
-			vertices.push_back(vdValueZ[i*resolution + j]-zMid);
-		}
-	}
-	
-	//更新索引数组数据
-	
-
-	//更新vbo数据
-	if(!m_scannerVbo.bind())
-		return;
-	m_scannerVbo.allocate(vertices.constData(), 3 * m_profileCount*m_resolution * sizeof(GLfloat));
-}
-*/
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
@@ -267,7 +220,7 @@ void GLWidget::mousePressEvent(QMouseEvent *event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-	if ((event->buttons() & Qt::MiddleButton && !(event->modifiers() & Qt::ShiftModifier)) || event->buttons() & Qt::LeftButton) {
+	if (event->buttons() & Qt::LeftButton) {
 
 		m_yRot = normalizeAngle( m_yLastRot - (event->x() - m_lastPos.x()) * 0.5);
 		//qDebug ("%02f",m_yRot);
@@ -280,11 +233,15 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event)
 		emit rotationChanged();
 	}
 
-	if ((event->buttons() & Qt::MiddleButton && event->modifiers() & Qt::ShiftModifier) || event->buttons() & Qt::RightButton) {
+	if (event->buttons() & Qt::MiddleButton) {
 		m_xPan = m_xLastPan - (event->pos().x() - m_lastPos.x()) * 1 / (double)width();
 		m_yPan = m_yLastPan + (event->pos().y() - m_lastPos.y()) * 1 / (double)height();
 
 		updateProjection();
+	}
+
+	if (event->buttons()&Qt::RightButton) {
+
 	}
 }
 
