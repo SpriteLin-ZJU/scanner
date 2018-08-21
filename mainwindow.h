@@ -14,6 +14,8 @@ class QLabel;
 class GcodeManager;
 class STLManager;
 class STLMoveDialog;
+class STLRotateDialog;
+class STLScaleDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -29,7 +31,12 @@ private:
 	void createStatusBar();
 	void loadProfile();
 	void saveProfile();
+	//STL²Ù×÷¶Ô»°¿ò
+	void hideDialog();
 	void openMoveDialog();
+	void openRotateDialog();
+	void openScaleDialog();
+
 	void updateStatusBar(QString& status);
 
 	OriginDrawer* m_originDrawer;
@@ -48,6 +55,7 @@ private:
 	QAction* m_STLMoveAction;
 	QAction* m_STLRotateAction;
 	QAction* m_STLCentreAction;
+	QAction* m_STLScaleAction;
 
 	QMenu* m_fileMenu;
 	QToolBar* m_toolBar;
@@ -61,4 +69,6 @@ private:
 	
 	//Dialog
 	STLMoveDialog* m_stlMoveDialog;
+	STLRotateDialog* m_stlRotateDialog;
+	STLScaleDialog* m_stlScaleDialog;
 };

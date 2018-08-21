@@ -4,8 +4,9 @@
         <file>Resources/picture/emergencystop.png</file>
         <file>Resources/picture/stop.png</file>
         <file>Resources/picture/file.png</file>
-        <file>Resources/picture/centre.png</file>
         <file>Resources/picture/move.png</file>
         <file>Resources/picture/rotate.png</file>
+        <file>Resources/picture/centre.png</file>
+        <file>Resources/picture/scale.png</file>
     </qresource>
 </RCC>

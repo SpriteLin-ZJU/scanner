@@ -90,6 +90,12 @@
     <ClCompile Include="stlmovedialog.cpp">
       <Filter>Source Files\Diaglogs</Filter>
     </ClCompile>
+    <ClCompile Include="stlrotatedialog.cpp">
+      <Filter>Source Files\Diaglogs</Filter>
+    </ClCompile>
+    <ClCompile Include="stlscaledialog.cpp">
+      <Filter>Source Files\Diaglogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -123,6 +129,12 @@
       <Filter>Header Files\Dialogs</Filter>
     </QtMoc>
     <QtMoc Include="stlmovedialog.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </QtMoc>
+    <QtMoc Include="stlrotatedialog.h">
+      <Filter>Header Files\Dialogs</Filter>
+    </QtMoc>
+    <QtMoc Include="stlscaledialog.h">
       <Filter>Header Files\Dialogs</Filter>
     </QtMoc>
   </ItemGroup>

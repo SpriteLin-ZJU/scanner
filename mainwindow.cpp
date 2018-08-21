@@ -10,6 +10,9 @@
 #include "stlmanager.h"
 #include "gcodedrawer.h"
 #include "stldrawer.h"
+#include "stlmovedialog.h"
+#include "stlrotatedialog.h"
+#include "stlscaledialog.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -18,7 +21,7 @@
 #include <QLayout>
 #include <QScreen>
 #include <QLabel>
-#include "stlmovedialog.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
@@ -67,6 +70,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 	//dailog
 	m_stlMoveDialog = new STLMoveDialog(this);
+	m_stlRotateDialog = new STLRotateDialog(this);
+	m_stlScaleDialog = new STLScaleDialog(this);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
@@ -80,6 +85,8 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerDrawer, &ScannerDrawer::setScanFeedrate);
 	connect(m_printerBox, &PrinterBox::startProfileTrans, m_scannerBox, &ScannerBox::startProfileTrans);
 	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
+	connect(m_stlRotateDialog, &STLRotateDialog::rotateSTL, m_stlManager, &STLManager::setRotateVal);
+	connect(m_stlScaleDialog, &STLScaleDialog::scaleSTL, m_stlManager, &STLManager::setScaleVal);
 }
 
 void MainWindow::createActions()
@@ -121,6 +128,12 @@ void MainWindow::createActions()
 	//创建旋转操作
 	m_STLRotateAction = new QAction(QIcon(":/picture/Resources/picture/rotate.png"), tr("Rotate STL Model"), this);
 	m_STLRotateAction->setStatusTip(tr("Rotate STL Model"));
+	connect(m_STLRotateAction, &QAction::triggered, this, &MainWindow::openRotateDialog);
+
+	//创建缩放操作
+	m_STLScaleAction = new QAction(QIcon(":/picture/Resources/picture/scale.png"), tr("Scale STL Model"), this);
+	m_STLScaleAction->setStatusTip(tr("Scale STL Model"));
+	connect(m_STLScaleAction, &QAction::triggered, this, &MainWindow::openScaleDialog);
 
 	//创建对中操作
 	m_STLCentreAction = new QAction(QIcon(":/picture/Resources/picture/centre.png"), tr("Centre STL Model"), this);
@@ -156,6 +169,7 @@ void MainWindow::createToolBars()
 	m_rightToolBar->setIconSize(QSize(30, 30));
 	m_rightToolBar->addAction(m_STLMoveAction);
 	m_rightToolBar->addAction(m_STLRotateAction);
+	m_rightToolBar->addAction(m_STLScaleAction);
 	m_rightToolBar->addAction(m_STLCentreAction);
 	m_rightToolBar->setStyleSheet("border:none;");
 	addToolBar(Qt::RightToolBarArea,m_rightToolBar);
@@ -176,10 +190,32 @@ void MainWindow::saveProfile()
 {
 }
 
+void MainWindow::hideDialog()
+{
+	m_stlMoveDialog->hide();
+	m_stlRotateDialog->hide();
+	m_stlScaleDialog->hide();
+}
+
 void MainWindow::openMoveDialog()
 {
+	hideDialog();
 	m_stlMoveDialog->setMoveValue(m_stlManager->getMoveValue());
 	m_stlMoveDialog->show();
+}
+
+void MainWindow::openRotateDialog()
+{
+	hideDialog();
+	m_stlRotateDialog->setRotateValue(m_stlManager->getRotateValue());
+	m_stlRotateDialog->show();
+}
+
+void MainWindow::openScaleDialog()
+{
+	hideDialog();
+	m_stlScaleDialog->setScaleValue(m_stlManager->getScaleValue());
+	m_stlScaleDialog->show();
 }
 
 void MainWindow::updateStatusBar(QString & status)

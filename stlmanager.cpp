@@ -98,29 +98,64 @@ void STLManager::setMoveVal(QVector3D position)
 	updateSTL();
 }
 
+void STLManager::setRotateVal(QVector3D rotate)
+{
+	m_xRot = rotate.x();
+	m_yRot = rotate.y();
+	m_zRot = rotate.z();
+	updateSTL();
+}
+
+void STLManager::setScaleVal(QVector3D scale)
+{
+	m_xScale = scale.x();
+	m_yScale = scale.y();
+	m_zScale = scale.z();
+	updateSTL();
+}
+
 QVector3D STLManager::getMoveValue()
 {
 	return QVector3D(m_xMove, m_yMove, m_zMove);
+}
+
+QVector3D STLManager::getRotateValue()
+{
+	return QVector3D(m_xRot, m_yRot, m_zRot);
+}
+
+QVector3D STLManager::getScaleValue()
+{
+	return QVector3D(m_xScale,m_yScale,m_zScale);
 }
 
 void STLManager::updateSTL()
 {
 	//若STL模型未旋转也未移动
 	if ((m_xMove == m_xMoveLast) && (m_yMove == m_yMoveLast) && (m_zMove == m_zMoveLast)
-		&& (m_xRot == m_xRotLast) && (m_yRot == m_yRotLast) && (m_zRot == m_zRotLast))	return;
-	//模型需要旋转或者移动
+		&& (m_xRot == m_xRotLast) && (m_yRot == m_yRotLast) && (m_zRot == m_zRotLast)
+		&& (m_xScale == m_xScaleLast) && (m_yRot == m_yScaleLast) && (m_zRot == m_zScaleLast))	return;
+	//模型需要旋转或者移动或者缩放
+	//平移矩阵
 	QMatrix4x4 moveMatrix;
 	moveMatrix.setToIdentity();
 	moveMatrix.translate(m_xMove, m_yMove, m_zMove);
+	//旋转矩阵
 	QMatrix4x4 rotateMatrix;
 	rotateMatrix.setToIdentity();
 	rotateMatrix.rotate(m_xRot, 1.0, 0.0, 0.0);
 	rotateMatrix.rotate(m_yRot, 0.0, 1.0, 0.0);
 	rotateMatrix.rotate(m_zRot, 0.0, 0.0, 1.0);
+	//缩放矩阵
+	QMatrix4x4 scaleMatrix;
+	scaleMatrix.setToIdentity();
+	scaleMatrix.scale(m_xScale/100, m_yScale/100, m_zScale/100);
+	//变换矩阵
 	QMatrix4x4 positionMatrix;
-	positionMatrix = moveMatrix * rotateMatrix;
+	positionMatrix = moveMatrix * rotateMatrix * scaleMatrix;
+	//法向量变换矩阵
 	QMatrix4x4 normalMatrix;
-	normalMatrix = QMatrix4x4((moveMatrix*rotateMatrix).normalMatrix());	//右下角为1
+	normalMatrix = QMatrix4x4(positionMatrix.normalMatrix());	//右下角为1
 
 	m_currentSTLPoint.clear();
 	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++) {
@@ -130,6 +165,16 @@ void STLManager::updateSTL()
 		
 		m_currentSTLPoint.push_back(transedPoint);
 	}
+	m_xMoveLast = m_xMove;
+	m_yMoveLast = m_yMove;
+	m_zMoveLast = m_zMove;
+	m_xRotLast = m_xRot;
+	m_yRotLast = m_yRot;
+	m_zRotLast = m_zRot;
+	m_xScaleLast = m_xScale;
+	m_yScaleLast = m_yScale;
+	m_zScaleLast = m_zScale;
+
 	emit drawSTLPoint();
 }
 

@@ -28,8 +28,11 @@ public:
 	void setYMove(double val);
 	void setZMove(double val);
 	void setMoveVal(QVector3D position);
-
+	void setRotateVal(QVector3D rotate);
+	void setScaleVal(QVector3D scale);
 	QVector3D getMoveValue();
+	QVector3D getRotateValue();
+	QVector3D getScaleValue();
 	
 	//更新STL数据点
 	void updateSTL();
@@ -41,6 +44,8 @@ private:
 	QList<QString> m_fileSTL;
 	QVector<PointData> m_currentSTLPoint;
 	QVector<PointData> m_STLPoint;
+
 	double m_xMove = 0.0, m_yMove = 0.0, m_zMove = 0.0, m_xMoveLast = 0.0, m_yMoveLast = 0.0, m_zMoveLast = 0.0;
 	double m_xRot = 0.0, m_yRot = 0.0, m_zRot = 0.0, m_xRotLast = 0.0, m_yRotLast = 0.0, m_zRotLast = 0.0;
+	double m_xScale = 100.0, m_yScale = 100.0, m_zScale = 100.0, m_xScaleLast = 100.0, m_yScaleLast = 100.0, m_zScaleLast = 100.0;
 };
