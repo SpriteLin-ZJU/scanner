@@ -4,6 +4,9 @@
 #include <QMatrix>
 #include <QDeBug>
 #include <QTime>
+#include <QtAlgorithms>
+#include <QList>
+
 STLManager::STLManager()
 {
 }
@@ -63,6 +66,31 @@ void STLManager::fileToPoint()
 		}
 	}
 	m_currentSTLPoint = m_STLPoint;
+}
+
+//二分法查找坐标点在无重复点指针表m_vertices中的位置，并将指向该点的指针返回
+QSharedPointer<Vertex> STLManager::searchPtInVertices(const QVector3D & pt)
+{
+	Vertex vertex(pt);
+	int sz = m_vertices.size();
+	int min_i = 0;
+	int max_i = sz - 1;
+
+	if (*m_vertices[min_i] == vertex)
+		return m_vertices[min_i];
+	if (*m_vertices[max_i] == vertex)
+		return m_vertices[max_i];
+
+	int mid_i=0;
+	while (true) {
+		mid_i = (min_i + max_i) / 2;
+		if (*m_vertices[mid_i] < vertex)
+			min_i = mid_i;
+		else if (*m_vertices[mid_i] > vertex)
+			max_i = mid_i;
+		else
+			return m_vertices[mid_i];
+	}
 }
 
 QVector<PointData>::iterator STLManager::pointBegin()
@@ -175,6 +203,119 @@ void STLManager::updateSTL()
 	m_yScaleLast = m_yScale;
 	m_zScaleLast = m_zScale;
 
+	STLTopologize();
 	emit drawSTLPoint();
+}
+
+void STLManager::STLTopologize()
+{
+	m_edges.clear();
+	m_normals.clear();
+	m_tris.clear();
+	m_vertices.clear();
+
+	QVector<Vertex> tmp_vertices;
+	int szVertex = m_currentSTLPoint.size();
+	tmp_vertices.reserve(szVertex);			//预先分配大小，提高效率
+
+	//将之前保存的STL顶点存入至临时动态数组中
+	for (int i = 0; i < szVertex; i++)
+		tmp_vertices.push_back(Vertex(m_currentSTLPoint[i].position));
+	qSort(tmp_vertices.begin(), tmp_vertices.end());	//将所有点从小到大排序，便于后续删除重复点
+
+	QSharedPointer<Vertex> spVertex(new Vertex(tmp_vertices[0]));
+	m_vertices.push_back(spVertex);						
+
+	//将点存入拓扑数组中，并删除重复点
+	for (int i = 1; i < szVertex; i++) {
+		if (tmp_vertices[i].position == tmp_vertices[i - 1].position)
+			continue;
+		else {
+			spVertex = QSharedPointer<Vertex>(new Vertex(tmp_vertices[i]));
+			m_vertices.push_back(spVertex);
+		}
+	}
+	//QVector<Vertex>().swap(tmp_vertices);		//实际上离开作用域后会自动释放，引用计数-1？用QDUBUG测试一下
+
+	//建立拓扑关系
+	int szTris = szVertex / 3;
+	//建立面表
+	for (int i = 0; i < szTris; i++) {
+		QSharedPointer<Triangle> spFace = QSharedPointer<Triangle>(new Triangle());
+		QSharedPointer<QVector3D> spNormal = QSharedPointer<QVector3D>(new QVector3D(m_currentSTLPoint[i * 3].normal));
+		m_normals.push_back(spNormal);
+		spFace->spV1 = searchPtInVertices(m_currentSTLPoint[i * 3].position);
+		spFace->spV2 = searchPtInVertices(m_currentSTLPoint[i * 3 + 1].position);
+		spFace->spV3 = searchPtInVertices(m_currentSTLPoint[i * 3 + 2].position);
+		spFace->spNormal = spNormal;
+		m_tris.push_back(spFace);
+	}
+	//建立边表
+	for (int i = 0; i < szTris; i++) {
+		QSharedPointer<Edge> e1(new Edge(m_tris[i]->spV1, m_tris[i]->spV2));
+		QSharedPointer<Edge> e2(new Edge(m_tris[i]->spV2, m_tris[i]->spV3));
+		QSharedPointer<Edge> e3(new Edge(m_tris[i]->spV3, m_tris[i]->spV1));
+		e1->spTri = e2->spTri = e3->spTri = m_tris[i];
+		e1->spEdgePrev = e2->spEdgeNext = e3;	//e1的前一条边和e2的后一条边即为e3
+		e2->spEdgePrev = e3->spEdgeNext = e1;
+		e3->spEdgePrev = e1->spEdgeNext = e2;
+		m_edges.push_back(e1);
+		m_edges.push_back(e2);
+		m_edges.push_back(e3);					//存入半边数组
+		m_tris[i]->spEdge1 = e1;
+		m_tris[i]->spEdge2 = e2;
+		m_tris[i]->spEdge3 = e3;
+	}
+	int szEdge = m_edges.size();
+	QVector<EdgeHull> edgeHulls;
+	EdgeHull edgeHull;						//接下来要做的事找到edge的向量边edgeAdja
+	for (int i = 0; i < szEdge; i++) {
+		edgeHull.spEdge = m_edges[i];
+		edgeHulls.push_back(edgeHull);		//将半边数据结构中的边存入edgeHulls数组
+	}
+	qSort(edgeHulls.begin(), edgeHulls.end());
+	for (int i = 0; i < edgeHulls.size(); i++)
+		edgeHulls[i].spEdge->num = i;		//半边数据结构中的边的编号，按边从小到大排序
+
+	for (int i = 0; i < szEdge - 1; i++) {
+		if (edgeHulls[i].isOpposite(edgeHulls[i + 1])) {
+			edgeHulls[i].spEdge->spEdgeAdja = edgeHulls[i + 1].spEdge;
+			edgeHulls[i + 1].spEdge->spEdgeAdja = edgeHulls[i].spEdge;
+			i++;
+		}
+	}
+
+	//处理还没有伙伴半边的边，可能为裂缝
+	QList<EdgeHull> tmpEdgeHulls;
+	unsigned int szEdgeError=0;
+	int iterTimes = 0;
+	for (int i = 0; i < edgeHulls.size(); i++) {
+		if (edgeHulls[i].spEdge->spEdgeAdja == NULL) {
+			tmpEdgeHulls.append(edgeHulls[i]);
+			szEdgeError++;
+		}
+	}
+	while (szEdgeError > 1 && iterTimes < 3) {
+		auto it = tmpEdgeHulls.begin();
+		while (it != tmpEdgeHulls.end()) {
+			if (it + 1 == tmpEdgeHulls.end())
+				break;
+			//如果两条边在误差范围内（0.01），则认为为相邻边，***并取平均点作为新点
+			if (it->isOppositeApp(*(it + 1))) {
+				it->spEdge->spEdgeAdja = (it + 1)->spEdge;
+				(it + 1)->spEdge->spEdgeAdja = it->spEdge;
+				QVector3D newVertexPos = (it->spEdge->spV1->position + (it + 1)->spEdge->spV2->position) / 2;
+				it->spEdge->spV1->position = (it + 1)->spEdge->spV2->position = newVertexPos;
+				newVertexPos= (it->spEdge->spV2->position + (it + 1)->spEdge->spV1->position) / 2;
+				it->spEdge->spV2->position = (it + 1)->spEdge->spV1->position = newVertexPos;
+				//将已修复的边从链表删除
+				it = tmpEdgeHulls.erase(it);
+				szEdgeError--;
+				it = tmpEdgeHulls.erase(it);
+				szEdgeError--;
+			}
+		}
+		iterTimes++;
+	}
 }
 
