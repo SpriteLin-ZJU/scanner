@@ -42,20 +42,20 @@ public:
 
 	//建立拓扑关系
 	void STLTopologize();
-
-signals:
-	void drawSTLPoint();
-
-private:
-	QList<QString> m_fileSTL;
-	QVector<PointData> m_currentSTLPoint;
-	QVector<PointData> m_STLPoint;
-
+	void findExtreme(double ext[]);
 	//拓扑关系
 	QVector<QSharedPointer<Vertex>> m_vertices;		//顶点:点从小到大排列，没有重复点
 	QVector<QSharedPointer<Edge>> m_edges;			//边:STL顺序排列
 	QVector<QSharedPointer<Triangle>> m_tris;		//面:STL顺序排列
 	QVector<QSharedPointer<QVector3D>> m_normals;	//法向量:STL顺序排列
+
+signals:
+	void drawSTLPoint();
+	void drawPolyLine();
+private:
+	QList<QString> m_fileSTL;
+	QVector<PointData> m_currentSTLPoint;
+	QVector<PointData> m_STLPoint;
 
 	double m_xMove = 0.0, m_yMove = 0.0, m_zMove = 0.0, m_xMoveLast = 0.0, m_yMoveLast = 0.0, m_zMoveLast = 0.0;
 	double m_xRot = 0.0, m_yRot = 0.0, m_zRot = 0.0, m_xRotLast = 0.0, m_yRotLast = 0.0, m_zRotLast = 0.0;

@@ -16,6 +16,7 @@ class STLManager;
 class STLMoveDialog;
 class STLRotateDialog;
 class STLScaleDialog;
+class Slicer;
 
 class MainWindow : public QMainWindow
 {
@@ -45,6 +46,7 @@ private:
 	ScannerDrawer* m_scannerDrawer;
 	GcodeDrawer* m_gcodeDrawer;
 	STLDrawer* m_stlDrawer;
+	Slicer* m_slicer;
 
 	QLabel* m_statusLabel;
 	QAction* m_loadAction;

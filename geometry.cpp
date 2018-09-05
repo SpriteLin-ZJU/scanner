@@ -79,7 +79,7 @@ double Edge::getLength(const QSharedPointer<Edge> _spEdge) const
 Triangle::Triangle()
 {
 	bUse = false;
-	faceType = 0;
+	faceType = NoSectSurface;
 }
 
 Triangle::Triangle(QSharedPointer<Vertex> _spV1, QSharedPointer<Vertex> _spV2, QSharedPointer<Vertex> _spV3)
@@ -89,7 +89,7 @@ Triangle::Triangle(QSharedPointer<Vertex> _spV1, QSharedPointer<Vertex> _spV2, Q
 	spV3 = _spV3;
 
 	bUse = false;
-	faceType = 0;
+	faceType = NoSectSurface;
 }
 
 QSharedPointer<Triangle> Triangle::getNbTri1() const
@@ -112,6 +112,20 @@ QSharedPointer<QVector3D> Triangle::getNormal()
 	QVector3D normal = QVector3D::normal(*spV2 - *spV1, *spV3 - *spV2);
 	spNormal = QSharedPointer<QVector3D>(new QVector3D(normal));
 	return spNormal;
+}
+
+void Triangle::sortVertex()
+{
+	spVMin = spV1;
+	spVMid = spV2;
+	spVMax = spV3;
+	//¶Ôvmax,vmid,vmin½øÐÐÅÅÐò
+	if (spVMin->position.z() > spVMid->position.z())
+		qSwap(spVMin, spVMid);
+	if (spVMid->position.z() > spVMax->position.z())
+		qSwap(spVMid, spVMax);
+	if (spVMin->position.z() > spVMid->position.z())
+		qSwap(spVMin, spVMid);
 }
 
 EdgeHull::EdgeHull()

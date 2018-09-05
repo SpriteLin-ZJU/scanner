@@ -6,6 +6,7 @@
 #include "netdrawer.h"
 #include "platformdrawer.h"
 #include "scannerdrawer.h"
+#include "slicer.h"
 #include "gcodemanager.h"
 #include "stlmanager.h"
 #include "gcodedrawer.h"
@@ -60,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_gcodeDrawer->setGcodeManager(m_gcodeManager);
 	m_stlDrawer = new STLDrawer();
 	m_stlDrawer->setSTLManager(m_stlManager);
+	m_slicer = new Slicer();
+	m_slicer->setSTLManager(m_stlManager);
+
 
 	m_glwidget->addDrawable(m_originDrawer);
 	m_glwidget->addDrawable(m_netDrawer);
@@ -67,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_glwidget->addDrawable(m_scannerDrawer);
 	m_glwidget->addDrawable(m_gcodeDrawer);
 	m_glwidget->addDrawable(m_stlDrawer);
+	m_glwidget->addDrawable(m_slicer);
 
 	//dailog
 	m_stlMoveDialog = new STLMoveDialog(this);
@@ -76,9 +81,10 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
-	connect(m_scannerDrawer, &ScannerDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
-	connect(m_gcodeDrawer, &GcodeDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
-	connect(m_stlDrawer, &STLDrawer::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_scannerDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_gcodeDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_stlDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
+	connect(m_slicer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_printerBox, &PrinterBox::drawSingleGcode, m_gcodeDrawer, &GcodeDrawer::drawSingleGcode);
 	connect(m_printerBox, &PrinterBox::drawSTLFile, m_stlDrawer, &STLDrawer::drawSTLFile);
 	connect(m_stlManager, &STLManager::drawSTLPoint, m_stlDrawer, &STLDrawer::drawSTLFile);
@@ -87,6 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
 	connect(m_stlRotateDialog, &STLRotateDialog::rotateSTL, m_stlManager, &STLManager::setRotateVal);
 	connect(m_stlScaleDialog, &STLScaleDialog::scaleSTL, m_stlManager, &STLManager::setScaleVal);
+	connect(m_stlManager, &STLManager::drawPolyLine, m_slicer, &Slicer::drawPolyLine);
 }
 
 void MainWindow::createActions()

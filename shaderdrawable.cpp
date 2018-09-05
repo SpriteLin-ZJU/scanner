@@ -4,7 +4,7 @@ ShaderDrawable::ShaderDrawable()
 {
 	m_needsUpdateGeometry = true;
 	m_canSee = true;
-	m_lineWidth = 1.0;
+	m_lineWidth = 2.0;
 	m_pointSize = 1.0;
 }
 
@@ -84,7 +84,6 @@ void ShaderDrawable::draw(QOpenGLShaderProgram * shaderProgram)
 	}
 	if (!m_lines.isEmpty()) {
 		glLineWidth(m_lineWidth);
-		GLenum i = glGetError();
 		glDrawArrays(GL_LINES, m_triangles.count(), m_lines.count());
 	}
 	if (!m_points.isEmpty()) {

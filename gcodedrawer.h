@@ -13,8 +13,7 @@ public:
 
 	void setGcodeManager(GcodeManager* manager);
 	void drawSingleGcode();
-signals:
-	void updateGraph();
+
 protected:
 	bool updateData();
 private:

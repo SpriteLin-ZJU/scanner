@@ -99,6 +99,12 @@
     <ClCompile Include="geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="layer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="slicer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -140,6 +146,12 @@
     <QtMoc Include="stlscaledialog.h">
       <Filter>Header Files\Dialogs</Filter>
     </QtMoc>
+    <QtMoc Include="slicer.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="shaderdrawable.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="mainwindow.ui">
@@ -161,9 +173,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="shaderdrawable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="origindrawer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -174,6 +183,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="layer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

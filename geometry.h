@@ -9,7 +9,7 @@ struct Vertex;
 struct Edge;
 struct Triangle;
 struct EdgeHull;
-
+enum FaceTypes { NoSectSurface = 0, TwoPointBelow, OnePointBelow };
 struct Vertex
 {
 	Vertex();
@@ -22,7 +22,7 @@ struct Vertex
 
 	QVector3D operator-(const Vertex& pt) const;
 	QVector3D position;
-	QVector<QSharedPointer<Edge>> edgeContainVertex;	//记录包含该端点的所有半边（注意是半边不是边），这里是否需要使用弱引用？？？
+	QVector<QWeakPointer<Edge>> edgeContainVertex;	//记录包含该端点的所有半边（注意是半边不是边），这里是否需要使用弱引用？？？
 };
 
 struct Edge	//半边数据结构
@@ -50,16 +50,18 @@ struct Triangle
 	QSharedPointer<Triangle> getNbTri2() const;
 	QSharedPointer<Triangle> getNbTri3() const;
 	QSharedPointer<QVector3D> getNormal();
+	void sortVertex();
 
 	///////////////
 	QSharedPointer<Vertex> spV1, spV2, spV3;		//逆时针排列
+	QSharedPointer<Vertex> spVMax, spVMid, spVMin;
 	QSharedPointer<Edge> spEdge1, spEdge2, spEdge3;	//半边
 	QSharedPointer<QVector3D> spNormal;				//法向量
 	QSharedPointer<Edge> spSelectIntersectLine;		//上一面片已经求交的相交线，用于寻找下一相交线
 	QSharedPointer<Edge> spOtherIntersectLine;		//另一条相交线
 
 	bool bUse;										//面片是否被使用
-	int faceType;									//面片类型
+	FaceTypes faceType = NoSectSurface;									//面片类型
 };
 
 struct EdgeHull

@@ -14,8 +14,9 @@ struct VertexData
 	QVector3D normal;
 };
 
-class ShaderDrawable :protected QOpenGLFunctions
+class ShaderDrawable :public QObject, protected QOpenGLFunctions
 {
+	Q_OBJECT
 public:
 	explicit ShaderDrawable();
 	~ShaderDrawable();
@@ -27,8 +28,8 @@ public:
 	void draw(QOpenGLShaderProgram *shaderProgram);
 	bool needsUpdateGeometry() const;
 	void updateGeometry(QOpenGLShaderProgram *shaderProgram = 0);
-
-
+signals:
+	void updateGraph();
 protected:
 	double m_lineWidth;
 	double m_pointSize;

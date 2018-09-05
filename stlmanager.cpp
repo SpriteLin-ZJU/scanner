@@ -203,8 +203,8 @@ void STLManager::updateSTL()
 	m_yScaleLast = m_yScale;
 	m_zScaleLast = m_zScale;
 
-	STLTopologize();
 	emit drawSTLPoint();
+	emit drawPolyLine();
 }
 
 void STLManager::STLTopologize()
@@ -248,6 +248,8 @@ void STLManager::STLTopologize()
 		spFace->spV2 = searchPtInVertices(m_currentSTLPoint[i * 3 + 1].position);
 		spFace->spV3 = searchPtInVertices(m_currentSTLPoint[i * 3 + 2].position);
 		spFace->spNormal = spNormal;
+		//对vmax,vmid,vmin进行排序
+		spFace->sortVertex();
 		m_tris.push_back(spFace);
 	}
 	//建立边表
@@ -305,7 +307,7 @@ void STLManager::STLTopologize()
 				it->spEdge->spEdgeAdja = (it + 1)->spEdge;
 				(it + 1)->spEdge->spEdgeAdja = it->spEdge;
 				QVector3D newVertexPos = (it->spEdge->spV1->position + (it + 1)->spEdge->spV2->position) / 2;
-				it->spEdge->spV1->position = (it + 1)->spEdge->spV2->position = newVertexPos;
+				it->spEdge->spV1->position = (it + 1)->spEdge->spV2->position = newVertexPos;//应该将所有指向V2的指针指向V1
 				newVertexPos= (it->spEdge->spV2->position + (it + 1)->spEdge->spV1->position) / 2;
 				it->spEdge->spV2->position = (it + 1)->spEdge->spV1->position = newVertexPos;
 				//将已修复的边从链表删除
@@ -318,4 +320,51 @@ void STLManager::STLTopologize()
 		iterTimes++;
 	}
 }
+
+void STLManager::findExtreme(double ext[])
+{
+	double x_min = m_vertices[0]->position.x();
+	double x_max = x_min;
+	double y_min = m_vertices[0]->position.y();
+	double y_max = y_min;
+	double z_min = m_vertices[0]->position.z();
+	double z_max = z_min;
+
+	int sz = m_vertices.size();
+	for (int i = 1; i<sz; i++)
+	{
+		if (m_vertices[i]->position.x() > x_max)
+		{
+			x_max = m_vertices[i]->position.x();
+		}
+		else if (m_vertices[i]->position.x() < x_min)
+		{
+			x_min = m_vertices[i]->position.x();
+		}
+		if (m_vertices[i]->position.y() > y_max)
+		{
+			y_max = m_vertices[i]->position.y();
+		}
+		else if (m_vertices[i]->position.y() < y_min)
+		{
+			y_min = m_vertices[i]->position.y();
+		}
+		if (m_vertices[i]->position.z() > z_max)
+		{
+			z_max = m_vertices[i]->position.z();
+		}
+		else if (m_vertices[i]->position.z() < z_min)
+		{
+			z_min = m_vertices[i]->position.z();
+		}
+	}
+
+	ext[0] = x_min;
+	ext[1] = x_max;
+	ext[2] = y_min;
+	ext[3] = y_max;
+	ext[4] = z_min;
+	ext[5] = z_max;
+}
+
 

@@ -12,8 +12,7 @@ public:
 
 	void setSTLManager(STLManager* manager);
 	void drawSTLFile();
-signals:
-	void updateGraph();
+
 protected:
 	bool updateData();
 private:

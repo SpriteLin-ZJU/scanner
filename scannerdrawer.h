@@ -12,8 +12,6 @@ public:
 	ScannerDrawer();
 	void update(unsigned int resolution);
 	void setScanFeedrate(int feedrate);
-signals:
-	void updateGraph();
 protected:
 	bool updateData();
 private:
