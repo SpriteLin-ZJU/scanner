@@ -13,7 +13,6 @@ PointTri::PointTri(const PointTri & _pointTri, QSharedPointer<Triangle> _tri)
 {
 	position = _pointTri.position;
 	tri = _tri;
-	isoTrajectoryLine = _pointTri.isoTrajectoryLine;
 }
 
 bool PointTri::operator^=(const PointTri & rhs) const

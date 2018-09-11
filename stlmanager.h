@@ -51,7 +51,6 @@ public:
 
 signals:
 	void drawSTLPoint();
-	void drawPolyLine();
 private:
 	QList<QString> m_fileSTL;
 	QVector<PointData> m_currentSTLPoint;

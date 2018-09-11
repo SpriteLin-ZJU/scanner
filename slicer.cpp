@@ -1,9 +1,11 @@
 #include "slicer.h"
+#include <QSettings>
 
 Slicer::Slicer()
 {
 	m_beginLayer = 0.30;
 	m_layerHeight = 2.50;
+	updateColor();
 }
 
 Slicer::~Slicer()
@@ -34,6 +36,7 @@ void Slicer::slice()
 		getPolyLinePoints(zLayer);
 		zLayer += m_layerHeight;
 	}
+	drawPolyLine();
 }
 
 void Slicer::getPolyLinePoints(double z)
@@ -161,9 +164,9 @@ void Slicer::judgeOtherLine(double z, QSharedPointer<Triangle> spSurface)
 	//由于采用摄动法,三角面片与切平面的相交情况应该只有两点在切平面上方或者下方两种情况
 	if ((spSurface->spSelectIntersectLine->spEdgePrev.lock()->spV1->position.z() - z)
 		*(spSurface->spSelectIntersectLine->spEdgePrev.lock()->spV2->position.z() - z) < 0)
-		spSurface->spOtherIntersectLine = spSurface->spSelectIntersectLine->spEdgePrev;
+		spSurface->spOtherIntersectLine = spSurface->spSelectIntersectLine->spEdgePrev.lock();
 	else
-		spSurface->spOtherIntersectLine = spSurface->spSelectIntersectLine->spEdgeNext;
+		spSurface->spOtherIntersectLine = spSurface->spSelectIntersectLine->spEdgeNext.lock();
 	m_sliceEdges.push_back(spSurface->spOtherIntersectLine);
 }
 
@@ -218,9 +221,15 @@ double Slicer::getZMid(QSharedPointer<Triangle> spSurface)
 	return z2;
 }
 
+void Slicer::updateColor()
+{
+	QSettings settings("ZJU", "scanner");
+	m_color = { settings.value("sliceR",0.5f).toFloat(),settings.value("sliceG",0.3f).toFloat(),settings.value("sliceB",0.6f).toFloat() };
+	update();
+}
+
 void Slicer::drawPolyLine()
 {
-	slice();
 	ShaderDrawable::update();
 	showGraph();
 	emit updateGraph();
@@ -230,15 +239,15 @@ bool Slicer::updateData()
 {
 	m_triangles.clear();
 	m_lines.clear();
-	QVector3D color = { 0.5f,0.3f,0.6f };
+	//QVector3D color = { 0.5f,0.3f,0.6f };
 	//绘制轮廓线
 	for (auto itLayer = m_layers.begin(); itLayer != m_layers.end(); itLayer++) {
 		for (auto itPolyLine = (*itLayer)->m_polyLines.begin(); itPolyLine != (*itLayer)->m_polyLines.end(); itPolyLine++) {
 			for (int i = 0; i < (*itPolyLine)->m_linkPoints.size() - 1; i++) {
 				QVector3D point1((*itPolyLine)->m_linkPoints[i]->position);
 				QVector3D point2((*itPolyLine)->m_linkPoints[i+1]->position);
-				m_lines.append({ point1,color,m_vectorNaN });
-				m_lines.append({ point2,color,m_vectorNaN });
+				m_lines.append({ point1,m_color,m_vectorNaN });
+				m_lines.append({ point2,m_color,m_vectorNaN });
 			}
 		}
 	}

@@ -4,7 +4,7 @@
 
 class GcodeManager;
 
-class GcodeDrawer :public QObject, public ShaderDrawable
+class GcodeDrawer :public ShaderDrawable
 {
 	Q_OBJECT
 public:
@@ -13,9 +13,9 @@ public:
 
 	void setGcodeManager(GcodeManager* manager);
 	void drawSingleGcode();
-
+	void updateColor() override;
 protected:
-	bool updateData();
+	bool updateData() override;
 private:
 	GcodeManager* m_gcodeManager;
 	

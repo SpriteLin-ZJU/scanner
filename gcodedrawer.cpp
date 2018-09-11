@@ -2,10 +2,12 @@
 #include "gcodemanager.h"
 #include <QRegexp>
 #include <QtMath>
+#include <QSettings>
 
 GcodeDrawer::GcodeDrawer()
 	: m_gcodeManager(NULL)
 {
+	updateColor();
 }
 
 GcodeDrawer::~GcodeDrawer()
@@ -77,7 +79,7 @@ bool GcodeDrawer::updateData()
 	double r = 0.2;
 	double diffRadians = 2 * M_PI / pointCircleCount;
 
-	QVector3D color = { 0.1f,0.3f,0.8f };
+	//QVector3D color = { 0.1f,0.3f,0.8f };
 	for (int i = 0; i < pointCircleCount; i++) {
 		//第一个三角面片
 		QVector3D point0 = (changeMatrix * QVector4D(r*qCos(i*diffRadians), r*qSin(i*diffRadians), 0, 1)).toVector3D();
@@ -85,26 +87,33 @@ bool GcodeDrawer::updateData()
 		QVector3D point2 = (changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), 0, 1)).toVector3D();
 		QVector3D normal = QVector3D::normal((point2 - point0), (point1 - point0));	//三角面片的法向量，朝外
 		
-		m_triangles.append({ point0,color, normal });
-		m_triangles.append({ point1,color, normal });
-		m_triangles.append({ point2,color, normal });
+		m_triangles.append({ point0,m_color, normal });
+		m_triangles.append({ point1,m_color, normal });
+		m_triangles.append({ point2,m_color, normal });
 		//第二个三角面片
 		QVector3D point3 = (changeMatrix * QVector4D(r*qCos((i + 1)*diffRadians), r*qSin((i + 1)*diffRadians), length, 1)).toVector3D();
-		m_triangles.append({ point1,color, normal });
-		m_triangles.append({ point2,color, normal });
-		m_triangles.append({ point3,color, normal });
+		m_triangles.append({ point1,m_color, normal });
+		m_triangles.append({ point2,m_color, normal });
+		m_triangles.append({ point3,m_color, normal });
 		//底面 注意Qt是行主序，而opengl是列主序
 		normal = normalMatrix * QVector3D(0, 0, -1);
-		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),color, normal });
-		m_triangles.append({ point0,color, normal });
-		m_triangles.append({ point2,color, normal });
+		m_triangles.append({ changeMatrix * QVector4D(0, 0, 0, 1).toVector3D(),m_color, normal });
+		m_triangles.append({ point0,m_color, normal });
+		m_triangles.append({ point2,m_color, normal });
 		//顶面
 		normal = normalMatrix * QVector3D(0, 0, 1);
-		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),color, normal });
-		m_triangles.append({ point1,color, normal });
-		m_triangles.append({ point3,color, normal });
+		m_triangles.append({ changeMatrix * QVector4D(0, 0, length, 1).toVector3D(),m_color, normal });
+		m_triangles.append({ point1,m_color, normal });
+		m_triangles.append({ point3,m_color, normal });
 	}
 
 	m_lastPoint = m_targetPoint;
 	return true;
+}
+
+void GcodeDrawer::updateColor()
+{
+	QSettings settings("ZJU", "scanner");
+	m_color = { settings.value("gcodeR",0.1f).toFloat(),settings.value("gcodeG",0.3f).toFloat(),settings.value("gcodeB",0.8f).toFloat() };
+	update();
 }

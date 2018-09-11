@@ -9,7 +9,7 @@
 #include <QWeakPointer>
 
 const double perturbationVal = 0.00001;
-class Slicer :public QObject, public ShaderDrawable
+class Slicer :public ShaderDrawable
 {
 	Q_OBJECT
 public:
@@ -29,10 +29,11 @@ public:
 	double getZMax(QSharedPointer<Triangle> spSurface);
 	double getZMid(QSharedPointer<Triangle> spSurface);					//处于中间的顶点Z值
 
+	void updateColor() override;
 	//槽
 	void drawPolyLine();
 protected:
-	bool updateData();
+	bool updateData() override;
 
 private:
 	QVector<QSharedPointer<Edge>> m_sliceEdges;	//存储相交边

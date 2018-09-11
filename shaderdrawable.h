@@ -28,6 +28,7 @@ public:
 	void draw(QOpenGLShaderProgram *shaderProgram);
 	bool needsUpdateGeometry() const;
 	void updateGeometry(QOpenGLShaderProgram *shaderProgram = 0);
+	virtual void updateColor();
 signals:
 	void updateGraph();
 protected:
@@ -36,9 +37,10 @@ protected:
 	QVector<VertexData> m_lines;
 	QVector<VertexData> m_points;
 	QVector<VertexData> m_triangles;
+	QVector3D m_color;
 	
 	QVector3D m_vectorNaN = { sNan,0,0 };
-
+	
 	QOpenGLBuffer m_vbo;//Protected for direct vbp access 子类可以直接访问
 
 	virtual bool updateData();

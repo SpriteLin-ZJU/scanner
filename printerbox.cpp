@@ -18,6 +18,7 @@
 
 #include "gcodemanager.h"
 #include "stlmanager.h"
+#include "printsettingsdialog.h"
 
 PrinterBox::PrinterBox(QWidget *parent) :
 	QWidget(parent), 
@@ -43,6 +44,9 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_sendCodeButton->setDisabled(true);
 	m_printButton = new QPushButton(tr("Print"), this);
 	m_printButton->setDisabled(true);
+	m_sliceButton = new QPushButton(tr("Slice"), this);
+	m_sliceButton->setDisabled(true);
+	m_settingsButton = new QPushButton(tr("Settings"), this);
 
 	//布局
 	QGridLayout* printerBoxLayout = new QGridLayout;
@@ -57,7 +61,9 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	printerBoxLayout->addWidget(m_manuCodeLabel, 3, 0, 1, 1);
 	printerBoxLayout->addWidget(m_manuCodeEdit, 3, 1, 1, 1);
 	printerBoxLayout->addWidget(m_sendCodeButton, 3, 2, 1, 1);
-	printerBoxLayout->addWidget(m_printButton, 4, 0, 1, 3);
+	printerBoxLayout->addWidget(m_settingsButton, 4, 0, 1, 1);
+	printerBoxLayout->addWidget(m_sliceButton, 4, 1, 1, 2);
+	printerBoxLayout->addWidget(m_printButton, 5, 0, 1, 3);
 
 	m_printGroupBox->setLayout(printerBoxLayout);
 	QHBoxLayout* mainLayout = new QHBoxLayout;
@@ -75,6 +81,8 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	connect(m_sendCodeButton, &QPushButton::clicked, this, &PrinterBox::sendManuGcode);
 	connect(m_printButton, &QPushButton::clicked, this, &PrinterBox::printGcode);
 	connect(m_serialPort, &QSerialPort::readyRead, this, &PrinterBox::onSerialReadyRead);
+	connect(m_sliceButton, &QPushButton::clicked, this, &PrinterBox::emitSliceSignal);
+	connect(m_settingsButton, &QPushButton::clicked, this, &PrinterBox::printSettings);
 }
 
 
@@ -185,6 +193,7 @@ void PrinterBox::openFile()
 			while (!textStream.atEnd())
 				m_stlManager->addLine(textStream.readLine());
 			m_stlManager->fileToPoint();
+			m_sliceButton->setEnabled(true);
 			emit drawSTLFile();
 		}
 		//如果打开的为Gcode文件
@@ -269,6 +278,15 @@ void PrinterBox::printGcode()
 		isPrinting = false;
 		if (m_printConnectButton->text() == "Disconnect")
 			m_printButton->setEnabled(true);
+	}
+}
+
+void PrinterBox::printSettings()
+{
+	PrintSettingsDialog settingDialog(this);
+	if (settingDialog.exec()) {
+		settingDialog.writeSetting();
+		emit updateColor();
 	}
 }
 

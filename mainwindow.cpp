@@ -93,7 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
 	connect(m_stlRotateDialog, &STLRotateDialog::rotateSTL, m_stlManager, &STLManager::setRotateVal);
 	connect(m_stlScaleDialog, &STLScaleDialog::scaleSTL, m_stlManager, &STLManager::setScaleVal);
-	connect(m_stlManager, &STLManager::drawPolyLine, m_slicer, &Slicer::drawPolyLine);
+	connect(m_printerBox, &PrinterBox::sliceSignal, m_slicer, &Slicer::slice);
+	connect(m_printerBox, &PrinterBox::updateColor, this, &MainWindow::updateColor);
 }
 
 void MainWindow::createActions()
@@ -228,6 +229,13 @@ void MainWindow::openScaleDialog()
 void MainWindow::updateStatusBar(QString & status)
 {
 	m_statusLabel->setText(status);
+}
+
+void MainWindow::updateColor()
+{
+	m_stlDrawer->updateColor();
+	m_slicer->updateColor();
+	m_gcodeDrawer->updateColor();
 }
 
 

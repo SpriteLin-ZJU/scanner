@@ -39,6 +39,7 @@ private:
 	void openScaleDialog();
 
 	void updateStatusBar(QString& status);
+	void updateColor();
 
 	OriginDrawer* m_originDrawer;
 	NetDrawer* m_netDrawer;

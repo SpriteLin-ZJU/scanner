@@ -3,7 +3,7 @@
 #include "stlmanager.h"
 
 
-class STLDrawer :public QObject, public ShaderDrawable
+class STLDrawer :public ShaderDrawable
 {
 	Q_OBJECT
 public:
@@ -12,7 +12,7 @@ public:
 
 	void setSTLManager(STLManager* manager);
 	void drawSTLFile();
-
+	void updateColor() override;
 protected:
 	bool updateData();
 private:

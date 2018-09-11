@@ -23,13 +23,16 @@ public:
 	void openFile();
 	void setGcodeManager(GcodeManager* manager);
 	void setSTLManager(STLManager* manager);
+	void emitSliceSignal() { emit sliceSignal(); }
 signals:
 	void updateStatus(QString&);
 	void drawSingleGcode();
 	void drawSTLFile();
+	void sliceSignal();
 	void setScanFeedrate(int);
 	void startProfileTrans();
 	void stopProfileTrans();
+	void updateColor();
 private:
 	const int BUFFER_SIZE = 127;
 	//iterator
@@ -57,12 +60,15 @@ private:
 	QLineEdit* m_manuCodeEdit;
 	QPushButton* m_sendCodeButton;
 	QPushButton* m_printButton;
+	QPushButton* m_sliceButton;
+	QPushButton* m_settingsButton;
 	
 	void initPorts();
 	void connectPort();
 	void changeConnectState();
 	void sendManuGcode();
 	void printGcode();
+	void printSettings();
 
 	void onSerialReadyRead();
 	void OnError(QString errorText);

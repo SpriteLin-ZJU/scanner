@@ -4,7 +4,7 @@ ShaderDrawable::ShaderDrawable()
 {
 	m_needsUpdateGeometry = true;
 	m_canSee = true;
-	m_lineWidth = 2.0;
+	m_lineWidth = 1.0;
 	m_pointSize = 1.0;
 }
 
@@ -49,6 +49,10 @@ void ShaderDrawable::init(QOpenGLShaderProgram * shaderProgram)
 bool ShaderDrawable::updateData()
 {
 	return true;
+}
+
+void ShaderDrawable::updateColor()
+{
 }
 
 void ShaderDrawable::update()

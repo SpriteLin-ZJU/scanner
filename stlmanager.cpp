@@ -204,7 +204,6 @@ void STLManager::updateSTL()
 	m_zScaleLast = m_zScale;
 
 	emit drawSTLPoint();
-	emit drawPolyLine();
 }
 
 void STLManager::STLTopologize()
@@ -221,7 +220,7 @@ void STLManager::STLTopologize()
 	//将之前保存的STL顶点存入至临时动态数组中
 	for (int i = 0; i < szVertex; i++)
 		tmp_vertices.push_back(Vertex(m_currentSTLPoint[i].position));
-	qSort(tmp_vertices.begin(), tmp_vertices.end());	//将所有点从小到大排序，便于后续删除重复点
+	qSort(tmp_vertices.begin(), tmp_vertices.end());	//将所有点从小到大排序，便于后续二分查找
 
 	QSharedPointer<Vertex> spVertex(new Vertex(tmp_vertices[0]));
 	m_vertices.push_back(spVertex);						

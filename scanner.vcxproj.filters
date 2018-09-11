@@ -105,6 +105,9 @@
     <ClCompile Include="slicer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="printsettingsdialog.cpp">
+      <Filter>Source Files\Diaglogs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -151,6 +154,9 @@
     </QtMoc>
     <QtMoc Include="shaderdrawable.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="printsettingsdialog.h">
+      <Filter>Header Files\Dialogs</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

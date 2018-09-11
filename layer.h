@@ -21,8 +21,7 @@ struct PointTri
 	QSharedPointer<QVector3D> normal;
 	QSharedPointer<Vertex> vertexToPointTri;	//点由哪个顶点转化而来
 	QSharedPointer<Edge> pointTriToEdge;		//记录点属于哪条半边
-	QWeakPointer<Line> baseLine;				//记录点属于哪条轮廓线段
-	QVector<QWeakPointer<Line>> isoTrajectoryLine;	//记录等距轨迹线
+	
 
 	bool bUse=false;
 	bool isoRestrition=false;
@@ -68,7 +67,6 @@ struct PolyLine
 {
 	PolyLine();
 	QVector<QSharedPointer<PointTri>> m_linkPoints;
-	QVector<QSharedPointer<Line>> m_lines;
 };
 
 struct Layer
