@@ -37,6 +37,7 @@ void STLManager::readBinarySTL(QFile& binaryFile)
 
 	binaryFile.seek(0);
 	QDataStream dataStream(&binaryFile);
+	dataStream.setVersion(QDataStream::Qt_5_9);
 	dataStream.setByteOrder(QDataStream::LittleEndian);	//Îñ±ØÉèÖÃ£¡£¡£¡
 	dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
 
@@ -265,6 +266,15 @@ void STLManager::updateSTL()
 
 void STLManager::centreSTL()
 {
+	
+	QMatrix4x4 rotateMatrix;
+	rotateMatrix.setToIdentity();
+	rotateMatrix.rotate(m_xRot, 1.0, 0.0, 0.0);
+	rotateMatrix.rotate(m_yRot, 0.0, 1.0, 0.0);
+	rotateMatrix.rotate(m_zRot, 0.0, 0.0, 1.0);
+	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++)
+		it->position = rotateMatrix * it->position;
+
 	double ext[6];
 	findOrigianlExtrem(ext);
 	double midX = (ext[0] + ext[1]) / 2;
@@ -274,7 +284,6 @@ void STLManager::centreSTL()
 	QMatrix4x4 moveMatrix;
 	moveMatrix.setToIdentity();
 	moveMatrix.translate(-midX, -midY, -minZ);
-
 	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++)
 		it->position = moveMatrix * it->position;
 

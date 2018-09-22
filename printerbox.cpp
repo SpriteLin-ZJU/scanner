@@ -189,8 +189,11 @@ void PrinterBox::openFile()
 		//如果是STL文件
 		if ((QFileInfo(file).suffix() == "STL") || QFileInfo(file).suffix() == "stl") {
 			//判断是二进制文件还是ASCII文件
-			QDataStream dataStream(&file);
+			QDataStream dataStream(&file); 
+			dataStream.setVersion(QDataStream::Qt_5_9);
 			dataStream.setByteOrder(QDataStream::LittleEndian);	//务必设置！！！
+			dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);//单精度，float为32位，4字节
+
 			file.seek(80);
 			quint32 triNum = 0;
 			dataStream >> triNum;
