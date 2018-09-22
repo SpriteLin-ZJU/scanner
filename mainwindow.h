@@ -3,7 +3,6 @@
 
 class OriginDrawer;
 class NetDrawer;
-class PlatformDrawer;
 class ScannerDrawer;
 class GcodeDrawer;
 class STLDrawer;
@@ -40,10 +39,10 @@ private:
 
 	void updateStatusBar(QString& status);
 	void updateColor();
+	void updateVisible(int id, bool checked);
 
 	OriginDrawer* m_originDrawer;
 	NetDrawer* m_netDrawer;
-	PlatformDrawer* m_platformDrawer;
 	ScannerDrawer* m_scannerDrawer;
 	GcodeDrawer* m_gcodeDrawer;
 	STLDrawer* m_stlDrawer;

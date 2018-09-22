@@ -5,7 +5,7 @@
 extern std::vector<double>vdValueX;
 extern std::vector<double>vdValueZ;
 
-class ScannerDrawer : public QObject, public ShaderDrawable
+class ScannerDrawer :public ShaderDrawable
 {
 	Q_OBJECT
 public:

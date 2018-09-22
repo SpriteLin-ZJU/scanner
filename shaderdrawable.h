@@ -28,6 +28,7 @@ public:
 	void draw(QOpenGLShaderProgram *shaderProgram);
 	bool needsUpdateGeometry() const;
 	void updateGeometry(QOpenGLShaderProgram *shaderProgram = 0);
+	void setVisible(bool visible);
 	virtual void updateColor();
 signals:
 	void updateGraph();

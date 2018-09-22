@@ -4,7 +4,6 @@
 Slicer::Slicer()
 {
 	m_beginLayer = 0.30;
-	m_layerHeight = 2.50;
 	updateColor();
 }
 
@@ -225,6 +224,7 @@ void Slicer::updateColor()
 {
 	QSettings settings("ZJU", "scanner");
 	m_color = { settings.value("sliceR",0.5f).toFloat(),settings.value("sliceG",0.3f).toFloat(),settings.value("sliceB",0.6f).toFloat() };
+	m_layerHeight = settings.value("layerHeight", 0.2f).toDouble();
 	update();
 }
 

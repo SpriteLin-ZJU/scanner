@@ -2,8 +2,7 @@
 
 #include <QSettings>
 
-ScannerDrawer::ScannerDrawer() :
-	QObject()	//实际上会自动调用父类的无参构造函数，因此不写也没事
+ScannerDrawer::ScannerDrawer()
 {
 	m_pointSize = 2.0;
 }

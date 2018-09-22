@@ -3,6 +3,7 @@
 #include <QVector3D>
 #include <QVector>
 #include <QSharedPointer>
+#include <QFile>
 #include "geometry.h"
 
 struct PointData
@@ -20,7 +21,9 @@ public:
 	void clear();
 	void addLine(const QString& string);
 	int pointCount();
-	void fileToPoint();
+	void readBinarySTL(QFile& binaryFile);
+	void readAsciiSTL(QFile& asciiFile);
+	float round(float val, int n);
 	QSharedPointer<Vertex> searchPtInVertices(const QVector3D& pt);
 	//返回m_STLpoint迭代器
 	QVector<PointData>::iterator pointBegin();
@@ -39,10 +42,13 @@ public:
 	
 	//更新STL数据点
 	void updateSTL();
+	//居中STL
+	void centreSTL();
 
 	//建立拓扑关系
 	void STLTopologize();
 	void findExtreme(double ext[]);
+	void findOrigianlExtrem(double ext[]);
 	//拓扑关系
 	QVector<QSharedPointer<Vertex>> m_vertices;		//顶点:点从小到大排列，没有重复点
 	QVector<QSharedPointer<Edge>> m_edges;			//边:STL顺序排列

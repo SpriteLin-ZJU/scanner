@@ -6,7 +6,7 @@
 #include <QTime>
 #include <QtAlgorithms>
 #include <QList>
-
+#include <QtCore/qmath.h>
 STLManager::STLManager()
 {
 }
@@ -31,8 +31,58 @@ int STLManager::pointCount()
 	return m_STLPoint.count();
 }
 
-void STLManager::fileToPoint()
+void STLManager::readBinarySTL(QFile& binaryFile)
 {
+	m_STLPoint.clear();
+
+	binaryFile.seek(0);
+	QDataStream dataStream(&binaryFile);
+	dataStream.setByteOrder(QDataStream::LittleEndian);	//务必设置！！！
+	dataStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+
+	binaryFile.seek(80);
+	quint32 triNum = 0;
+	dataStream >> triNum;
+	//点坐标
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+	QVector3D point;
+	//面片法向量
+	float nx = 0.0f;
+	float ny = 0.0f;
+	float nz = 0.0f;
+	QVector3D normal;
+	for (int i = 0; i < triNum; i++) {
+		//读取法向量
+		dataStream >> nx;
+		dataStream >> ny;
+		dataStream >> nz;
+		normal = QVector3D(nx, ny, nz);
+		//读取三个点坐标
+		for (int j = 0; j < 3; j++) {
+			dataStream >> x;
+			dataStream >> y;
+			dataStream >> z;
+			point = QVector3D(round(x,2), round(y,2), round(z,2));
+			m_STLPoint.append({ point,normal });
+		}
+		//舍弃最后两字节标志位
+		dataStream.skipRawData(2);
+	}
+	m_currentSTLPoint = m_STLPoint;
+	binaryFile.close();
+
+}
+
+void STLManager::readAsciiSTL(QFile& asciiFile)
+{
+	clear();
+	asciiFile.seek(0);
+	QTextStream textStream(&asciiFile);
+	while (!textStream.atEnd())
+		addLine(textStream.readLine());
+
 	//点坐标
 	float x = 0.0f;
 	float y = 0.0f;
@@ -49,7 +99,6 @@ void STLManager::fileToPoint()
 	positionRx.setMinimal(false);
 
 	int pos = 0;
-	auto it = m_STLPoint.begin();
 	for (auto it = m_fileSTL.cbegin(); it != m_fileSTL.cend(); it++) {
 		//若为法向量
 		if ((pos = normalRx.indexIn(*it)) != -1) {							//注意indexIn(str,int offset=0)!offset不能为-1；
@@ -59,13 +108,20 @@ void STLManager::fileToPoint()
 		}
 		//若为顶点坐标
 		else if ((pos = positionRx.indexIn(*it)) != -1) {
-			x = positionRx.cap(1).toFloat();
-			y = positionRx.cap(2).toFloat();
-			z = positionRx.cap(3).toFloat();
+			x = round(positionRx.cap(1).toFloat(), 2);
+			y = round(positionRx.cap(2).toFloat(), 2);
+			z = round(positionRx.cap(3).toFloat(), 2);
 			m_STLPoint.append({ QVector3D(x,y,z),QVector3D(nx,ny,nz) });
 		}
 	}
 	m_currentSTLPoint = m_STLPoint;
+	asciiFile.close();
+}
+
+float STLManager::round(float val, int n)
+{
+	val = ((float)(int)(val * qPow(10, n) + 0.5)) / qPow(10, n);
+	return val;
 }
 
 //二分法查找坐标点在无重复点指针表m_vertices中的位置，并将指向该点的指针返回
@@ -142,6 +198,7 @@ void STLManager::setScaleVal(QVector3D scale)
 	updateSTL();
 }
 
+
 QVector3D STLManager::getMoveValue()
 {
 	return QVector3D(m_xMove, m_yMove, m_zMove);
@@ -204,6 +261,28 @@ void STLManager::updateSTL()
 	m_zScaleLast = m_zScale;
 
 	emit drawSTLPoint();
+}
+
+void STLManager::centreSTL()
+{
+	double ext[6];
+	findOrigianlExtrem(ext);
+	double midX = (ext[0] + ext[1]) / 2;
+	double midY = (ext[2] + ext[3]) / 2;
+	double minZ = ext[4];
+
+	QMatrix4x4 moveMatrix;
+	moveMatrix.setToIdentity();
+	moveMatrix.translate(-midX, -midY, -minZ);
+
+	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++)
+		it->position = moveMatrix * it->position;
+
+	m_xMove = m_xMoveLast = m_yMove = m_yMoveLast = m_zMove = m_zMoveLast = 0;
+	m_xRot = m_xRotLast = m_yRot = m_yRotLast = m_zRot = m_zRotLast = 0;
+	m_xScaleLast = m_yScaleLast = m_zScaleLast = 100;
+
+	updateSTL();
 }
 
 void STLManager::STLTopologize()
@@ -307,7 +386,7 @@ void STLManager::STLTopologize()
 				(it + 1)->spEdge->spEdgeAdja = it->spEdge;
 				QVector3D newVertexPos = (it->spEdge->spV1->position + (it + 1)->spEdge->spV2->position) / 2;
 				it->spEdge->spV1->position = (it + 1)->spEdge->spV2->position = newVertexPos;//应该将所有指向V2的指针指向V1
-				newVertexPos= (it->spEdge->spV2->position + (it + 1)->spEdge->spV1->position) / 2;
+				newVertexPos = (it->spEdge->spV2->position + (it + 1)->spEdge->spV1->position) / 2;
 				it->spEdge->spV2->position = (it + 1)->spEdge->spV1->position = newVertexPos;
 				//将已修复的边从链表删除
 				it = tmpEdgeHulls.erase(it);
@@ -315,6 +394,8 @@ void STLManager::STLTopologize()
 				it = tmpEdgeHulls.erase(it);
 				szEdgeError--;
 			}
+			else
+				it++;
 		}
 		iterTimes++;
 	}
@@ -355,6 +436,52 @@ void STLManager::findExtreme(double ext[])
 		else if (m_vertices[i]->position.z() < z_min)
 		{
 			z_min = m_vertices[i]->position.z();
+		}
+	}
+
+	ext[0] = x_min;
+	ext[1] = x_max;
+	ext[2] = y_min;
+	ext[3] = y_max;
+	ext[4] = z_min;
+	ext[5] = z_max;
+}
+
+void STLManager::findOrigianlExtrem(double ext[])
+{
+	double x_min = m_STLPoint.at(0).position.x();
+	double x_max = x_min;
+	double y_min = m_STLPoint.at(0).position.y();
+	double y_max = y_min;
+	double z_min = m_STLPoint.at(0).position.z();
+	double z_max = z_min;
+
+	int sz = m_STLPoint.size();
+	for (int i = 1; i<sz; i++)
+	{
+		if (m_STLPoint[i].position.x() > x_max)
+		{
+			x_max = m_STLPoint[i].position.x();
+		}
+		else if (m_STLPoint[i].position.x() < x_min)
+		{
+			x_min = m_STLPoint[i].position.x();
+		}
+		if (m_STLPoint[i].position.y() > y_max)
+		{
+			y_max = m_STLPoint[i].position.y();
+		}
+		else if (m_STLPoint[i].position.y() < y_min)
+		{
+			y_min = m_STLPoint[i].position.y();
+		}
+		if (m_STLPoint[i].position.z() > z_max)
+		{
+			z_max = m_STLPoint[i].position.z();
+		}
+		else if (m_STLPoint[i].position.z() < z_min)
+		{
+			z_min = m_STLPoint[i].position.z();
 		}
 	}
 

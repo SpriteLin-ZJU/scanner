@@ -6,6 +6,8 @@
 #include <QOpenglVertexArrayObject>
 #include <QMatrix4x4>
 #include <shaderdrawable.h>
+#include <QButtonGroup>
+#include <QCheckBox>
 
 QT_FORWARD_DECLARE_CLASS(QOpenGLShaderProgram)
 QT_FORWARD_DECLARE_CLASS(QOpenGLTexture)
@@ -31,7 +33,7 @@ public:
 
 signals:
 	void rotationChanged();
-
+	void updateVisible(int id, bool checked);
 protected:
 	void initializeGL() override;
 	void resizeGL(int width, int height) override;
@@ -52,13 +54,10 @@ private:
 	double m_xPan=0, m_yPan=0, m_xLastPan=0, m_yLastPan=0;
 	double m_xLookAt=0, m_yLookAt=0, m_zLookAt=0;
 	QPoint m_lastPos;
-	double m_zoom=0.3;
+	double m_zoom=0.45;
 	double m_distance=200;
 	//光照数组，上左右前后
 	QVector3D m_lightsArray[5] = { {0,0,300}, {300,0,0}, {-300,0,0}, {0,300,0}, {0,300,0} };
-
-
-	QVector<GLfloat> netVertices;
 
 	int m_mvpMatrixLoc=0;
 	int m_mvMatrixLoc=0;
@@ -72,4 +71,11 @@ private:
 	double normalizeAngle(double angle);
 	void updateProjection();
 	void updateView();
+
+	//复选按钮
+	QButtonGroup* m_buttonGroup;
+	QCheckBox* m_scannerCheckBox;
+	QCheckBox* m_gcodeCheckBox;
+	QCheckBox* m_stlCheckBox;
+	QCheckBox* m_sliceCheckBox;
 };

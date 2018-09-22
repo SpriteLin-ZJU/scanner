@@ -4,7 +4,6 @@
 #include "glwidget.h"
 #include "origindrawer.h"
 #include "netdrawer.h"
-#include "platformdrawer.h"
 #include "scannerdrawer.h"
 #include "slicer.h"
 #include "gcodemanager.h"
@@ -55,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent)
 	//添加需要绘制的drawable
 	m_originDrawer = new OriginDrawer();
 	m_netDrawer = new NetDrawer();
-	m_platformDrawer = new PlatformDrawer();
 	m_scannerDrawer = new ScannerDrawer();
 	m_gcodeDrawer = new GcodeDrawer();
 	m_gcodeDrawer->setGcodeManager(m_gcodeManager);
@@ -67,7 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	m_glwidget->addDrawable(m_originDrawer);
 	m_glwidget->addDrawable(m_netDrawer);
-	m_glwidget->addDrawable(m_platformDrawer);
 	m_glwidget->addDrawable(m_scannerDrawer);
 	m_glwidget->addDrawable(m_gcodeDrawer);
 	m_glwidget->addDrawable(m_stlDrawer);
@@ -95,6 +92,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_stlScaleDialog, &STLScaleDialog::scaleSTL, m_stlManager, &STLManager::setScaleVal);
 	connect(m_printerBox, &PrinterBox::sliceSignal, m_slicer, &Slicer::slice);
 	connect(m_printerBox, &PrinterBox::updateColor, this, &MainWindow::updateColor);
+	connect(m_glwidget, &GLWidget::updateVisible, this, &MainWindow::updateVisible);
 }
 
 void MainWindow::createActions()
@@ -146,6 +144,7 @@ void MainWindow::createActions()
 	//创建对中操作
 	m_STLCentreAction = new QAction(QIcon(":/picture/Resources/picture/centre.png"), tr("Centre STL Model"), this);
 	m_STLCentreAction->setStatusTip(tr("Centre STL Model"));
+	connect(m_STLCentreAction, &QAction::triggered, m_stlManager, &STLManager::centreSTL);
 }
 
 void MainWindow::createMenus()
@@ -235,7 +234,18 @@ void MainWindow::updateColor()
 {
 	m_stlDrawer->updateColor();
 	m_slicer->updateColor();
-	m_gcodeDrawer->updateColor();
+	//m_gcodeDrawer->updateColor();
+}
+
+void MainWindow::updateVisible(int id, bool checked)
+{
+	QVector<ShaderDrawable*> vdrawables;
+	vdrawables.push_back(m_scannerDrawer);
+	vdrawables.push_back(m_gcodeDrawer);
+	vdrawables.push_back(m_stlDrawer);
+	vdrawables.push_back(m_slicer);
+
+	vdrawables[id]->setVisible(checked);
 }
 
 

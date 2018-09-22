@@ -10,7 +10,6 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QTextStream>
 #include <QRegexp>
 #include <QTimer>
 #include <QDeBug>
@@ -188,11 +187,20 @@ void PrinterBox::openFile()
 		m_gcodeManager->clear();
 		//判断文件格式
 		//如果是STL文件
-		if (QFileInfo(file).suffix() == "STL") {
-			QTextStream textStream(&file);
-			while (!textStream.atEnd())
-				m_stlManager->addLine(textStream.readLine());
-			m_stlManager->fileToPoint();
+		if ((QFileInfo(file).suffix() == "STL") || QFileInfo(file).suffix() == "stl") {
+			//判断是二进制文件还是ASCII文件
+			QDataStream dataStream(&file);
+			dataStream.setByteOrder(QDataStream::LittleEndian);	//务必设置！！！
+			file.seek(80);
+			quint32 triNum = 0;
+			dataStream >> triNum;
+			if (file.size() == (80 + 4 + 50 * triNum))
+				//为二进制文件
+				m_stlManager->readBinarySTL(file);
+			
+			else 
+				m_stlManager->readAsciiSTL(file);
+			
 			m_sliceButton->setEnabled(true);
 			emit drawSTLFile();
 		}
@@ -204,7 +212,6 @@ void PrinterBox::openFile()
 			if (m_printConnectButton->text() == "Disconnect")
 				m_printButton->setEnabled(true);
 		}
-
 		QString s = "File name:" + path;
 		m_printFileLabel->setText(s);
 		

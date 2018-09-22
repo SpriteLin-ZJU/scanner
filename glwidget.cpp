@@ -5,11 +5,40 @@
 #include <QCoreApplication>
 #include <math.h>
 #include <QDebug>
+#include <QLayout>
 
 GLWidget::GLWidget(QWidget* parent)
 	:QOpenGLWidget(parent), 
 	m_program(0)
 {
+	m_buttonGroup = new QButtonGroup(this);
+	//设置不互斥
+	m_buttonGroup->setExclusive(false);
+	m_scannerCheckBox = new QCheckBox(tr("ScanData"), this);
+	m_scannerCheckBox->setChecked(true);
+	m_gcodeCheckBox = new QCheckBox(tr("Gcode"), this);
+	m_gcodeCheckBox->setChecked(true);
+	m_stlCheckBox = new QCheckBox(tr("STL"), this);
+	m_stlCheckBox->setChecked(true);
+	m_sliceCheckBox = new QCheckBox(tr("SliceLine"), this);
+	m_sliceCheckBox->setChecked(true);
+	m_buttonGroup->addButton(m_scannerCheckBox,0);
+	m_buttonGroup->addButton(m_gcodeCheckBox,1);
+	m_buttonGroup->addButton(m_stlCheckBox,2);
+	m_buttonGroup->addButton(m_sliceCheckBox,3);
+	QHBoxLayout* hLayout = new QHBoxLayout;
+	hLayout->addWidget(m_scannerCheckBox);
+	hLayout->addWidget(m_gcodeCheckBox);
+	hLayout->addWidget(m_stlCheckBox);
+	hLayout->addWidget(m_sliceCheckBox);
+	hLayout->addStretch();
+	QVBoxLayout* vLayout = new QVBoxLayout;
+	vLayout->addLayout(hLayout);
+	vLayout->addStretch();
+	setLayout(vLayout);
+	connect(m_buttonGroup, QOverload<int, bool>::of(&QButtonGroup::buttonToggled),
+		[=](int id, bool checked) { emit updateVisible(id, checked); });
+
 	updateProjection();
 	updateView();
 }
@@ -131,11 +160,6 @@ void GLWidget::initializeGL()
 	m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
 	m_normalMatrixLoc = m_program->uniformLocation("normalMatrix");
 	m_lightsArrayLoc = m_program->uniformLocation("lightsArray");
-
-
-	//创建点云VAO
-	//creatScannerVao();
-	//创建
 
 	m_program->release();
 }

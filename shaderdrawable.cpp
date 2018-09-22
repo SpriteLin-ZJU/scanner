@@ -67,12 +67,12 @@ bool ShaderDrawable::canSee()
 
 void ShaderDrawable::showGraph()
 {
-	m_canSee = true;
+	setVisible(true);
 }
 
 void ShaderDrawable::hideGraph()
 {
-	m_canSee = false;
+	setVisible(false);
 }
 
 bool ShaderDrawable::needsUpdateGeometry() const
@@ -113,4 +113,10 @@ void ShaderDrawable::updateGeometry(QOpenGLShaderProgram * shaderProgram)
 
 	m_vbo.release();
 	m_needsUpdateGeometry = false;
+}
+
+void ShaderDrawable::setVisible(bool visible)
+{
+	m_canSee = visible;
+	emit updateGraph();
 }
