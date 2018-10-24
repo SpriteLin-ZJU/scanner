@@ -272,8 +272,13 @@ void STLManager::centreSTL()
 	rotateMatrix.rotate(m_xRot, 1.0, 0.0, 0.0);
 	rotateMatrix.rotate(m_yRot, 0.0, 1.0, 0.0);
 	rotateMatrix.rotate(m_zRot, 0.0, 0.0, 1.0);
-	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++)
-		it->position = rotateMatrix * it->position;
+	QMatrix4x4 normalMatrix;
+	normalMatrix = QMatrix4x4(rotateMatrix.normalMatrix());
+
+	for (auto it = m_STLPoint.begin(); it != m_STLPoint.end(); it++) {
+		it->position = rotateMatrix * (it->position);
+		it->normal = normalMatrix * (it->normal);
+	}
 
 	double ext[6];
 	findOrigianlExtrem(ext);

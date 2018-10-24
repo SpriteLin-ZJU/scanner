@@ -104,7 +104,7 @@ void Slicer::getPolyLinePoints(double z)
 				break;
 			}
 		}
-		//如果没有未被使用的面片，则跳出外部循环，完成改成轮廓处理
+		//如果没有未被使用的面片，则跳出外部循环，完成该层轮廓处理
 		if (finishFlag)
 			break;
 	}

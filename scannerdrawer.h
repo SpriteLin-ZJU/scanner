@@ -17,6 +17,6 @@ protected:
 private:
 	unsigned int m_resolution=0;
 	unsigned int m_profileCount=0;
-	unsigned int m_scanFeedrate = 1500;	//与scanRate一起确定轮廓的y坐标。
+	unsigned int m_scanFeedrate = 800;	//与scanRate一起确定轮廓的y坐标。
 	double m_stepY = 0.0;
 };
