@@ -105,6 +105,12 @@
     <ClCompile Include="printsettingsdialog.cpp">
       <Filter>Source Files\Diaglogs</Filter>
     </ClCompile>
+    <ClCompile Include="scandatamanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pointcloudbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -154,6 +160,12 @@
     </QtMoc>
     <QtMoc Include="printsettingsdialog.h">
       <Filter>Header Files\Dialogs</Filter>
+    </QtMoc>
+    <QtMoc Include="scandatamanager.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="pointcloudbox.h">
+      <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

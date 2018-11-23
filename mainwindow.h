@@ -1,6 +1,6 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
-
+#include <QThread>
 class OriginDrawer;
 class NetDrawer;
 class ScannerDrawer;
@@ -12,18 +12,26 @@ class GLWidget;
 class QLabel;
 class GcodeManager;
 class STLManager;
+class ScandataManager;
 class STLMoveDialog;
 class STLRotateDialog;
 class STLScaleDialog;
 class Slicer;
+class QProgressBar;
+class QVTKWidget;
+class PointCloudBox;
 
 class MainWindow : public QMainWindow
 {
 	Q_OBJECT
-
+	QThread pclThread;
 public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
+	~MainWindow();
 
+	void updateVTK();
+	//PCL≤€
+	void clearPointData();
 private:
 	void createActions();
 	void createMenus();
@@ -49,8 +57,11 @@ private:
 	Slicer* m_slicer;
 
 	QLabel* m_statusLabel;
+	QProgressBar* m_progressBar;
+
 	QAction* m_loadAction;
 	QAction* m_saveAction;
+	QAction* m_clearPointCloudsAction;
 	QAction* m_exitAction;
 	QAction* m_emergencyStopAction;
 	QAction* m_stopPrintingAction;
@@ -65,6 +76,8 @@ private:
 
 	GcodeManager* m_gcodeManager;
 	STLManager* m_stlManager;
+	ScandataManager* m_scandataManager;
+
 	ScannerBox* m_scannerBox;
 	PrinterBox* m_printerBox;
 	GLWidget* m_glwidget;
@@ -73,4 +86,8 @@ private:
 	STLMoveDialog* m_stlMoveDialog;
 	STLRotateDialog* m_stlRotateDialog;
 	STLScaleDialog* m_stlScaleDialog;
+
+	//PCLœ‡πÿ
+	QVTKWidget* m_qvtkWidget;
+	PointCloudBox* m_pointCloudBox;
 };

@@ -17,14 +17,15 @@
 
 #include "gcodemanager.h"
 #include "stlmanager.h"
+#include "scandatamanager.h"
 #include "printsettingsdialog.h"
 
 PrinterBox::PrinterBox(QWidget *parent) :
 	QWidget(parent), 
 	m_gcodeManager(NULL),
-	m_stlManager(NULL)
+	m_stlManager(NULL),
+	m_scandataManager(NULL)
 {
-
 	m_printGroupBox = new QGroupBox(tr("Printer"), this);
 	m_printGroupBox->setMaximumWidth(300);
 
@@ -89,6 +90,7 @@ PrinterBox::~PrinterBox()
 {
 	m_gcodeManager = NULL;
 	m_stlManager = NULL;
+	m_scandataManager = NULL;
 }
 
 void PrinterBox::emergencyStop()
@@ -167,7 +169,7 @@ void PrinterBox::openFile()
 	QSettings settings("ZJU", "scanner");
 	QString lastPath = settings.value("lastFilePath").toString();
 
-	QString path = QFileDialog::getOpenFileName(this, tr("Open File"), lastPath, "*.gcode;;*.stl");
+	QString path = QFileDialog::getOpenFileName(this, tr("Open File"), lastPath, "*.gcode;;*.stl;;*.pcd");
 	if (!path.isEmpty()) {
 		
 		//保存上次打开目录
@@ -182,9 +184,11 @@ void PrinterBox::openFile()
 				tr("Cannot open file:\n%1").arg(path));
 			return;
 		}
+
 		//清空之前stl及gcode
 		m_stlManager->clear();
 		m_gcodeManager->clear();
+		
 		//判断文件格式
 		//如果是STL文件
 		if ((QFileInfo(file).suffix() == "STL") || QFileInfo(file).suffix() == "stl") {
@@ -206,19 +210,29 @@ void PrinterBox::openFile()
 			
 			m_sliceButton->setEnabled(true);
 			emit drawSTLFile();
+			
+			QString s = "File name:" + QFileInfo(file).fileName();
+			m_printFileLabel->setText(s);
 		}
-		//如果打开的为Gcode文件
+		
+		//如果是Gcode文件
 		else if (QFileInfo(file).suffix() == "gcode") {
 			QTextStream textStream(&file);
 			while (!textStream.atEnd())
 				m_gcodeManager->addCommand(textStream.readLine());
 			if (m_printConnectButton->text() == "Disconnect")
 				m_printButton->setEnabled(true);
+			
+			QString s = "File name:" + QFileInfo(file).fileName();
+			m_printFileLabel->setText(s);
 		}
-		QString s = "File name:" + path;
-		m_printFileLabel->setText(s);
 		
+		//如果是pcd文件
+		else if (QFileInfo(file).suffix() == "pcd") {
+			emit openPcdFile(path);
+		}
 	}
+	//如果未选择文件
 	else {
 		QMessageBox::warning(this, tr("Path"),
 			tr("You did not select any file."));
@@ -233,6 +247,11 @@ void PrinterBox::setGcodeManager(GcodeManager * manager)
 void PrinterBox::setSTLManager(STLManager * manager)
 {
 	m_stlManager = manager;
+}
+
+void PrinterBox::setScandataManager(ScandataManager * manager)
+{
+	m_scandataManager = manager;
 }
 
 //发送手动指令

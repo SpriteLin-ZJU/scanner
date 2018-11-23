@@ -7,10 +7,9 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QSettings>
+#include <QVector>
 
 std::vector<unsigned char> vucProfileBuffer;
-std::vector<double>vdValueX;
-std::vector<double>vdValueZ;
 
 QString convertIP(unsigned int i)
 {
@@ -26,7 +25,8 @@ QString convertIP(unsigned int i)
 }
 
 ScannerBox::ScannerBox(QWidget *parent) :
-	QWidget(parent)
+	QWidget(parent),
+	m_scandataManager(NULL)
 {
 	m_ipLabel = new QLabel(tr("IP:"),this);
 	m_scanType = new QLabel(tr("Type:"),this);
@@ -86,6 +86,7 @@ ScannerBox::~ScannerBox()
 {
 	m_scanner->Disconnect();
 	delete m_scanner;
+	m_scandataManager = NULL;
 }
 
 void ScannerBox::ipSearch()
@@ -175,10 +176,10 @@ void ScannerBox::writeScannerSettings()
 	QSettings settings("ZJU", "scanner");
 	if (settings.contains("shutterTime")) {
 		m_uiResolution = settings.value("resolution").toUInt();
-		m_uiShutterTime = settings.value("shutterTime").toUInt();
+		m_uiShutterTime = settings.value("shutterTime").toUInt()/10.0;
 		m_uiscanRate = settings.value("scanRate").toUInt();
 	}
-	m_uiIdleTime = 1.0 / m_uiscanRate * 1000 * 1000 - m_uiShutterTime;
+	m_uiIdleTime = 1.0 / m_uiscanRate * 1000 * 100 - m_uiShutterTime;
 
 	//设置分辨率
 	m_iRetValue = m_scanner->SetResolution(settings.value("resolution").toUInt());
@@ -201,13 +202,13 @@ void ScannerBox::writeScannerSettings()
 		return;
 	}
 	//设置shutter time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, m_uiShutterTime/10);
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_SHUTTERTIME, m_uiShutterTime);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_SHUTTERTIME)", m_iRetValue);
 		return;
 	}
 	//设置idle time
-	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, m_uiIdleTime/10);
+	m_iRetValue = m_scanner->SetFeature(FEATURE_FUNCTION_IDLETIME, m_uiIdleTime);
 	if (m_iRetValue < GENERAL_FUNCTION_OK) {
 		OnError("Error during SetFeature(FEATURE_FUNCTION_IDLETIME)", m_iRetValue);
 		return;
@@ -255,13 +256,12 @@ void ScannerBox::stopProfileTrans()
 	m_transButton->setText(tr("Start"));
 
 	//处理接收到的数据,分配向量所需大小
-	vdValueX.clear();
-	vdValueX.resize(vucProfileBuffer.size() / 64);
-	vdValueZ.clear();
-	vdValueZ.resize(vucProfileBuffer.size() / 64);
+	std::vector<double> vdValueX;
+	std::vector<double> vdValueZ;
+	vdValueX.reserve(vucProfileBuffer.size() / 64);
+	vdValueZ.reserve(vucProfileBuffer.size() / 64);
 
 	for (int i = 0; i < vucProfileBuffer.size() / (64*m_uiResolution); i++) {
-		
 		m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[i*m_uiResolution*64], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL,
 			NULL, NULL, &vdValueX[i*m_uiResolution], &vdValueZ[i*m_uiResolution], NULL, NULL);
 	}
@@ -271,8 +271,34 @@ void ScannerBox::stopProfileTrans()
 		OnError("Error during Converting of profile data", m_iRetValue);
 		return;
 	}
+
+	//将点云转为存入m_scandataManager
+	QVector<double> valueX = QVector<double>::fromStdVector(vdValueX);
+	QVector<double> valueZ = QVector<double>::fromStdVector(vdValueZ);
+		//计算Y值
+	double stepY = m_scanFeedrate / (m_uiscanRate*60.0);
+	unsigned int profileCount = valueX.size() / m_uiResolution;
+	QVector<double> valueY;
+	valueY.reserve(valueX.size());
+
+	for (int i = 0; i < profileCount; i++)
+		for (int j = 0; j < m_uiResolution; j++)
+			valueY.push_back(stepY*i - 125.0);
+	//转为PCL点云
+	m_scandataManager->scandataToPoint(valueX, valueY, valueZ, m_uiResolution);
+
 	//更新图像
-	emit updateGraph(m_uiResolution);
+	emit drawPointClouds();
+}
+
+void ScannerBox::setScandataManager(ScandataManager * manager)
+{
+	m_scandataManager = manager;
+}
+
+void ScannerBox::setScanFeedrate(int feedrate)
+{
+	m_scanFeedrate = feedrate;
 }
 
 

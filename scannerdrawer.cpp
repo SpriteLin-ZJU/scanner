@@ -1,5 +1,5 @@
 #include "scannerdrawer.h"
-
+#include "scandatamanager.h"
 #include <QSettings>
 
 ScannerDrawer::ScannerDrawer()
@@ -7,35 +7,31 @@ ScannerDrawer::ScannerDrawer()
 	m_pointSize = 2.0;
 }
 
-void ScannerDrawer::update(unsigned int resolution)
+ScannerDrawer::~ScannerDrawer()
 {
-	m_resolution = resolution;
-	ShaderDrawable::update();
-	emit updateGraph();
 }
 
-void ScannerDrawer::setScanFeedrate(int feedrate)
+void ScannerDrawer::setScandataManager(ScandataManager * manager)
 {
-	m_scanFeedrate = feedrate;
+	m_scandataManager = manager;
+}
+
+void ScannerDrawer::drawScandataGL()
+{
+	ShaderDrawable::update();
+	emit updateGraph();
 }
 
 bool ScannerDrawer::updateData()
 {
 	m_points.clear();
 	QVector3D color = { 1.0f,0.3f,0.2f };
-
-	if (m_resolution == 0)
-		return true;
-	m_profileCount = vdValueX.size() / m_resolution;
-
-	QSettings settings("ZJU", "scanner");
-	if (settings.contains("shutterTime")) {
-		unsigned int scanRate = settings.value("scanRate").toUInt();
-		m_stepY = m_scanFeedrate / (scanRate * 60.0);
-	}
-	for (int i = 0; i < m_profileCount; i++) {
-		for (int j = 0; j < m_resolution; j++) {
-			m_points.append({ QVector3D(m_stepY*i-125.0, vdValueX[i*m_resolution + j], vdValueZ[i*m_resolution + j]-69.8),color, m_vectorNaN });
+	for (auto it = m_scandataManager->m_clouds.begin(); 
+		it != m_scandataManager->m_clouds.end(); it++) {
+		for (int i = 0; i < (*it)->points.size(); i++) {
+			QVector3D position = { (*it)->points[i].x,
+				(*it)->points[i].y, (*it)->points[i].z };
+			m_points.append({ position,color,m_vectorNaN });
 		}
 	}
 

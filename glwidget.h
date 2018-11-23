@@ -44,7 +44,7 @@ protected:
 	void wheelEvent(QWheelEvent *event) override;
 
 private:
-	const double M_PI = 3.14159265358979323846;
+	const double m_PI = 3.14159265358979323846;
 	const double ZOOM_STEP = 1.1;
 
 	QList<ShaderDrawable*> m_shaderDrawableList;

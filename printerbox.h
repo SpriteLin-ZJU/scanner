@@ -10,6 +10,7 @@ class QSerialPort;
 class QTimer;
 class GcodeManager;
 class STLManager;
+class ScandataManager;
 
 class PrinterBox : public QWidget
 {
@@ -23,6 +24,7 @@ public:
 	void openFile();
 	void setGcodeManager(GcodeManager* manager);
 	void setSTLManager(STLManager* manager);
+	void setScandataManager(ScandataManager* manager);
 	void emitSliceSignal() { emit sliceSignal(); }
 signals:
 	void updateStatus(QString&);
@@ -33,6 +35,7 @@ signals:
 	void startProfileTrans();
 	void stopProfileTrans();
 	void updateColor();
+	void openPcdFile(QString);
 private:
 	const int BUFFER_SIZE = 127;
 	//iterator
@@ -42,6 +45,7 @@ private:
 
 	GcodeManager* m_gcodeManager;
 	STLManager* m_stlManager;
+	ScandataManager* m_scandataManager;
 
 	QGroupBox* m_printGroupBox;
 	//∂Àø⁄…Ë÷√

@@ -1,6 +1,6 @@
+#include "mainwindow.h"
 #include "scannerbox.h"
 #include "printerbox.h"
-#include "mainwindow.h"
 #include "glwidget.h"
 #include "origindrawer.h"
 #include "netdrawer.h"
@@ -8,11 +8,13 @@
 #include "slicer.h"
 #include "gcodemanager.h"
 #include "stlmanager.h"
+#include "scandatamanager.h"
 #include "gcodedrawer.h"
 #include "stldrawer.h"
 #include "stlmovedialog.h"
 #include "stlrotatedialog.h"
 #include "stlscaledialog.h"
+#include "pointcloudbox.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -21,17 +23,42 @@
 #include <QLayout>
 #include <QScreen>
 #include <QLabel>
-
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QProgressBar>
+#include <QTabWidget>
+#include "QVTKWidget.h"
+#include <vtkRenderWindow.h>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent)
 {
 	m_scannerBox = new ScannerBox(this);
 	m_printerBox = new PrinterBox(this);
+	m_pointCloudBox = new PointCloudBox(this);
+
+	//manager
 	m_gcodeManager = new GcodeManager();
 	m_stlManager = new STLManager();
+	//manager-scandataManager
+	m_scandataManager = new ScandataManager();
+	m_scandataManager->moveToThread(&pclThread);
+	connect(&pclThread, &QThread::finished, m_scandataManager, &QObject::deleteLater);
+	pclThread.start();
+
 	m_printerBox->setGcodeManager(m_gcodeManager);
 	m_printerBox->setSTLManager(m_stlManager);
+	m_printerBox->setScandataManager(m_scandataManager);
+	m_scannerBox->setScandataManager(m_scandataManager);
+	
+	//VTK
+	m_qvtkWidget = new QVTKWidget();
+	m_qvtkWidget->SetRenderWindow(m_scandataManager->m_viewer->getRenderWindow());
+	m_scandataManager->m_viewer->setupInteractor(m_qvtkWidget->GetInteractor(), m_qvtkWidget->GetRenderWindow());
+	m_qvtkWidget->update();
+	connect(m_scandataManager, &ScandataManager::updateVTK, this, &MainWindow::updateVTK);
+	
+	//opengl widget
 	m_glwidget = new GLWidget(this);
 
 	createActions();
@@ -39,15 +66,21 @@ MainWindow::MainWindow(QWidget *parent)
 	createToolBars();
 	createStatusBar();
 
-	//布局
+	//左侧布局
 	QWidget* widget = new QWidget;
 	QVBoxLayout* vlayout = new QVBoxLayout;
 	vlayout->addWidget(m_scannerBox);
 	vlayout->addWidget(m_printerBox);
+	vlayout->addWidget(m_pointCloudBox);
 	vlayout->addStretch();
+	//显示布局
+	QTabWidget* GLTabWidget = new QTabWidget;
+	GLTabWidget->addTab(m_glwidget, tr("3DP"));
+	GLTabWidget->addTab(m_qvtkWidget, tr("Point clouds"));
+	//布局
 	QHBoxLayout* hlayout = new QHBoxLayout;
 	hlayout->addLayout(vlayout,0);
-	hlayout->addWidget(m_glwidget, 1);
+	hlayout->addWidget(GLTabWidget, 1);
 	widget->setLayout(hlayout);
 	setCentralWidget(widget);
 
@@ -55,6 +88,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_originDrawer = new OriginDrawer();
 	m_netDrawer = new NetDrawer();
 	m_scannerDrawer = new ScannerDrawer();
+	m_scannerDrawer->setScandataManager(m_scandataManager);
 	m_gcodeDrawer = new GcodeDrawer();
 	m_gcodeDrawer->setGcodeManager(m_gcodeManager);
 	m_stlDrawer = new STLDrawer();
@@ -76,7 +110,8 @@ MainWindow::MainWindow(QWidget *parent)
 	m_stlScaleDialog = new STLScaleDialog(this);
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
-	connect(m_scannerBox, &ScannerBox::updateGraph, m_scannerDrawer, &ScannerDrawer::update);
+	connect(m_scannerBox, &ScannerBox::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
+	connect(m_scandataManager, &ScandataManager::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_gcodeDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
@@ -85,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_printerBox, &PrinterBox::drawSingleGcode, m_gcodeDrawer, &GcodeDrawer::drawSingleGcode);
 	connect(m_printerBox, &PrinterBox::drawSTLFile, m_stlDrawer, &STLDrawer::drawSTLFile);
 	connect(m_stlManager, &STLManager::drawSTLPoint, m_stlDrawer, &STLDrawer::drawSTLFile);
-	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerDrawer, &ScannerDrawer::setScanFeedrate);
+	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerBox, &ScannerBox::setScanFeedrate);
 	connect(m_printerBox, &PrinterBox::startProfileTrans, m_scannerBox, &ScannerBox::startProfileTrans);
 	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
 	connect(m_stlRotateDialog, &STLRotateDialog::rotateSTL, m_stlManager, &STLManager::setRotateVal);
@@ -93,6 +128,28 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_printerBox, &PrinterBox::sliceSignal, m_slicer, &Slicer::slice);
 	connect(m_printerBox, &PrinterBox::updateColor, this, &MainWindow::updateColor);
 	connect(m_glwidget, &GLWidget::updateVisible, this, &MainWindow::updateVisible);
+	//to ScandataManager
+	connect(m_printerBox, &PrinterBox::openPcdFile, m_scandataManager, &ScandataManager::openPcdFile);
+	connect(m_pointCloudBox, &PointCloudBox::filterPointCloud, m_scandataManager, &ScandataManager::filterPointCloud);
+	connect(m_pointCloudBox, &PointCloudBox::sacPointCloud, m_scandataManager, &ScandataManager::sacPointCloud);
+	connect(m_pointCloudBox, &PointCloudBox::resetPointCloud, m_scandataManager, &ScandataManager::resetPointCloud);
+
+}
+
+MainWindow::~MainWindow()
+{
+	pclThread.quit();
+	pclThread.wait();
+}
+
+void MainWindow::updateVTK()
+{
+	m_qvtkWidget->update();
+}
+
+void MainWindow::clearPointData()
+{
+	m_scandataManager->clear();
 }
 
 void MainWindow::createActions()
@@ -100,14 +157,20 @@ void MainWindow::createActions()
 	//创建加载打印文件动作
 	m_loadAction = new QAction(QIcon(":/picture/Resources/picture/file.png"),tr("&Load"), this);
 	m_loadAction->setShortcut(tr("Ctrl+L"));
-	m_loadAction->setStatusTip(tr("Load Gcode"));
+	m_loadAction->setStatusTip(tr("Load File"));
 	connect(m_loadAction, &QAction::triggered, m_printerBox, &PrinterBox::openFile);
 
 	//创建保存文件动作
-	m_saveAction = new QAction(tr("&Save"), this);
+	m_saveAction = new QAction(QIcon(":/picture/Resources/picture/save.png"), tr("&Save Point Clouds"), this);
 	m_saveAction->setShortcut(QKeySequence::Save);
-	m_saveAction->setStatusTip(tr("Save profiles"));
+	m_saveAction->setStatusTip(tr("Save point clouds"));
 	connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveProfile);
+
+	//创建清空点云操作
+	m_clearPointCloudsAction = new QAction(tr("&Clear point clouds"), this);
+	m_clearPointCloudsAction->setStatusTip(tr("Clear point clouds"));
+	//connect(m_clearPointCloudsAction, &QAction::triggered, m_scandataManager, &ScandataManager::clear);
+	connect(m_clearPointCloudsAction, &QAction::triggered,this, &MainWindow::clearPointData);
 
 	//创建退出程序动作
 	m_exitAction = new QAction(tr("&Exit"), this);
@@ -152,6 +215,7 @@ void MainWindow::createMenus()
 	m_fileMenu = menuBar()->addMenu(tr("&File"));
 	m_fileMenu->addAction(m_loadAction);
 	m_fileMenu->addAction(m_saveAction);
+	m_fileMenu->addAction(m_clearPointCloudsAction);
 	m_fileMenu->addSeparator();
 	m_fileMenu->addAction(m_exitAction);
 
@@ -184,8 +248,16 @@ void MainWindow::createToolBars()
 
 void MainWindow::createStatusBar()
 {
-	m_statusLabel = new QLabel(tr("No Scanner connect"));
+	m_statusLabel = new QLabel(tr("No Scanner connect"),this);
+	
+	m_progressBar = new QProgressBar(this);
+	m_progressBar->setOrientation(Qt::Horizontal);
+	m_progressBar->setMinimum(0);
+	m_progressBar->setMaximum(100);
+	m_progressBar->setVisible(false);
+
 	statusBar()->addWidget(m_statusLabel);
+	statusBar()->addWidget(m_progressBar);
 }
 
 void MainWindow::loadProfile()
@@ -195,6 +267,17 @@ void MainWindow::loadProfile()
 
 void MainWindow::saveProfile()
 {
+	//若当前没有点云数据，则弹出警告
+	if(!m_scandataManager->isEmpty())
+		QMessageBox::warning(this, tr("Save scan point data"),
+			tr("no point clouds need to be saved."));
+	//当前有点云数据
+	else {
+		QString savePath = QFileDialog::getSaveFileName(this, tr("Save Point"), "", tr("PCD (*.pcd)"));
+		if (savePath.isEmpty())
+			return;
+		m_scandataManager->savePcdFile(savePath);
+	}
 }
 
 void MainWindow::hideDialog()

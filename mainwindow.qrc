@@ -8,5 +8,6 @@
         <file>Resources/picture/rotate.png</file>
         <file>Resources/picture/centre.png</file>
         <file>Resources/picture/scale.png</file>
+        <file>Resources/picture/save.png</file>
     </qresource>
 </RCC>

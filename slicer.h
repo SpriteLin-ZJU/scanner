@@ -29,6 +29,8 @@ public:
 	double getZMax(QSharedPointer<Triangle> spSurface);
 	double getZMid(QSharedPointer<Triangle> spSurface);					//处于中间的顶点Z值
 
+	void linshiyongyong(double _z);
+
 	void updateColor() override;
 	//槽
 	void drawPolyLine();

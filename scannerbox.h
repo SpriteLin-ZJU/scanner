@@ -1,12 +1,15 @@
 #pragma once
-#include "InterfaceLLT_2.h"
 #include <QWidget>
+//pcl包含文件必须在InterfaceLLT_2前(windows.h前)或者见onenote！！！
+#include "InterfaceLLT_2.h"
+#include "scandatamanager.h"
 
 class QLabel;
 class CInterfaceLLT;
 class QComboBox;
 class QGroupBox;
 class QPushButton;
+//class ScandataManager;
 
 extern void __stdcall NewProfile(const unsigned char* pucData, unsigned int uiSize, void* pUserData);
 extern 	std::vector<unsigned char> vucProfileBuffer;
@@ -20,9 +23,12 @@ public:
 	
 	void startProfileTrans();
 	void stopProfileTrans();
+
+	void setScandataManager(ScandataManager* manager);
+	void setScanFeedrate(int feedrate);
 signals:
 	void updateStatus(QString& );
-	void updateGraph(unsigned int);
+	void drawPointClouds();
 private:
 	void ipSearch();
 	void scanConnect();
@@ -43,12 +49,16 @@ private:
 	QPushButton* m_advancedSettings;
 	QPushButton* m_transButton;
 	
+	//manager
+	ScandataManager* m_scandataManager;
+
 	//传感器接口
 	CInterfaceLLT* m_scanner;
 	unsigned int m_uiResolution = 0;
-	unsigned int m_uiShutterTime = 1000; //1000us
+	unsigned int m_uiShutterTime = 100; //1000us
 	unsigned int m_uiIdleTime = 3900;
 	unsigned int m_uiscanRate = 25;	//25 1/s
+	unsigned int m_scanFeedrate = 800;
 	TScannerType m_tscanCONTROLType;
 	
 	std::vector<unsigned int> m_vuiInterfaces;

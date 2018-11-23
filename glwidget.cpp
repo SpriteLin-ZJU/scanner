@@ -183,12 +183,12 @@ void GLWidget::updateView()
 	m_viewMatrix.setToIdentity();
 
 	double r = m_distance;
-	double angX = M_PI / 180 * m_xRot;
-	double angY = M_PI / 180 * m_yRot;
+	double angX = m_PI / 180 * m_xRot;
+	double angY = m_PI / 180 * m_yRot;
 
 	QVector3D eye(r * cos(angX) * sin(angY) + m_xLookAt, r * sin(angX) + m_yLookAt, r * cos(angX) * cos(angY) + m_zLookAt);
 	QVector3D center(m_xLookAt, m_yLookAt, m_zLookAt);
-	QVector3D up(fabs(m_xRot) == 90 ? -sin(angY + (m_xRot < 0 ? M_PI : 0)) : 0, cos(angX), fabs(m_xRot) == 90 ? -cos(angY + (m_xRot < 0 ? M_PI : 0)) : 0);
+	QVector3D up(fabs(m_xRot) == 90 ? -sin(angY + (m_xRot < 0 ? m_PI : 0)) : 0, cos(angX), fabs(m_xRot) == 90 ? -cos(angY + (m_xRot < 0 ? m_PI : 0)) : 0);
 
 	m_viewMatrix.lookAt(eye, center, up.normalized());
 

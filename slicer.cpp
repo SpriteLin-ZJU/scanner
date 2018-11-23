@@ -3,7 +3,7 @@
 
 Slicer::Slicer()
 {
-	m_beginLayer = 0.30;
+	m_beginLayer = 0.3;
 	updateColor();
 }
 
@@ -30,13 +30,39 @@ void Slicer::slice()
 	zMax = ex[5];
 	double zLayer = 0.0;
 	zLayer = zMin + m_beginLayer;
-
 	while (zLayer < zMax) {
 		getPolyLinePoints(zLayer);
 		zLayer += m_layerHeight;
 	}
+	
 	drawPolyLine();
 }
+/*linshi
+void Slicer::linshiyongyong(double _z)
+{
+	for (auto itLayer = m_layers.begin(); itLayer != m_layers.end(); itLayer++) {
+		if ((*itLayer)->z == _z) {
+			double maxLength=-1.0, minLength=10000, aveLength=0.0;
+			int lineCount = 0;
+			//遍历每个轮廓线的线段
+			for (auto itPolyLine = (*itLayer)->m_polyLines.begin(); itPolyLine != (*itLayer)->m_polyLines.end(); itPolyLine++) {
+				for (int i = 0; i < (*itPolyLine)->m_linkPoints.size() - 1; i++) {
+					QVector3D point1((*itPolyLine)->m_linkPoints[i]->position);
+					QVector3D point2((*itPolyLine)->m_linkPoints[i + 1]->position);
+					double lineLength = (point1 - point2).length();
+					if (lineLength > maxLength)	maxLength = lineLength;
+					if (lineLength < minLength)	minLength = lineLength;
+					aveLength += lineLength;
+					lineCount++;
+				}
+			}
+			//输出
+			qDebug() << "Layer Height: " << _z;
+			qDebug() << "Line Count: " << lineCount << "  MaxLength: " << maxLength << "  MinLength: " << minLength << "AverageLength: " << aveLength / lineCount;
+		}
+	}
+}
+*/
 
 void Slicer::getPolyLinePoints(double z)
 {
