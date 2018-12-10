@@ -15,6 +15,7 @@
 #include "stlrotatedialog.h"
 #include "stlscaledialog.h"
 #include "pointcloudbox.h"
+#include "vtkwidget.h"
 
 #include <QAction>
 #include <QMenuBar>
@@ -52,12 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_scannerBox->setScandataManager(m_scandataManager);
 	
 	//VTK
-	m_qvtkWidget = new QVTKWidget();
-	m_qvtkWidget->SetRenderWindow(m_scandataManager->m_viewer->getRenderWindow());
-	m_scandataManager->m_viewer->setupInteractor(m_qvtkWidget->GetInteractor(), m_qvtkWidget->GetRenderWindow());
-	m_qvtkWidget->update();
-	connect(m_scandataManager, &ScandataManager::updateVTK, this, &MainWindow::updateVTK);
-	
+	m_vtkWidget = new VTKWidget(this);
 	//opengl widget
 	m_glwidget = new GLWidget(this);
 
@@ -76,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
 	//显示布局
 	QTabWidget* GLTabWidget = new QTabWidget;
 	GLTabWidget->addTab(m_glwidget, tr("3DP"));
-	GLTabWidget->addTab(m_qvtkWidget, tr("Point clouds"));
+	GLTabWidget->addTab(m_vtkWidget, tr("Point clouds"));
 	//布局
 	QHBoxLayout* hlayout = new QHBoxLayout;
 	hlayout->addLayout(vlayout,0);
@@ -111,7 +107,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
-	connect(m_scandataManager, &ScandataManager::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
 	connect(m_gcodeDrawer, &ShaderDrawable::updateGraph, m_glwidget, &GLWidget::updateGraph);
@@ -122,18 +117,30 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_stlManager, &STLManager::drawSTLPoint, m_stlDrawer, &STLDrawer::drawSTLFile);
 	connect(m_printerBox, &PrinterBox::setScanFeedrate, m_scannerBox, &ScannerBox::setScanFeedrate);
 	connect(m_printerBox, &PrinterBox::startProfileTrans, m_scannerBox, &ScannerBox::startProfileTrans);
+	connect(m_printerBox, &PrinterBox::stopProfileTrans, m_scannerBox, &ScannerBox::stopProfileTrans);
 	connect(m_stlMoveDialog, &STLMoveDialog::moveSTL, m_stlManager, &STLManager::setMoveVal);
 	connect(m_stlRotateDialog, &STLRotateDialog::rotateSTL, m_stlManager, &STLManager::setRotateVal);
 	connect(m_stlScaleDialog, &STLScaleDialog::scaleSTL, m_stlManager, &STLManager::setScaleVal);
 	connect(m_printerBox, &PrinterBox::sliceSignal, m_slicer, &Slicer::slice);
+	connect(m_printerBox, &PrinterBox::convertLayerToPointCloud, m_slicer, &Slicer::convertLayertoPointCloud);
 	connect(m_printerBox, &PrinterBox::updateColor, this, &MainWindow::updateColor);
 	connect(m_glwidget, &GLWidget::updateVisible, this, &MainWindow::updateVisible);
-	//to ScandataManager
+	//ScandataManager
+	connect(m_scandataManager, &ScandataManager::updateStatus, this, &MainWindow::updateStatusBar, Qt::BlockingQueuedConnection);
 	connect(m_printerBox, &PrinterBox::openPcdFile, m_scandataManager, &ScandataManager::openPcdFile);
 	connect(m_pointCloudBox, &PointCloudBox::filterPointCloud, m_scandataManager, &ScandataManager::filterPointCloud);
 	connect(m_pointCloudBox, &PointCloudBox::sacPointCloud, m_scandataManager, &ScandataManager::sacPointCloud);
+	connect(m_pointCloudBox, &PointCloudBox::icpPointCloud, m_scandataManager, &ScandataManager::icpPointCloud);
 	connect(m_pointCloudBox, &PointCloudBox::resetPointCloud, m_scandataManager, &ScandataManager::resetPointCloud);
-
+	connect(m_pointCloudBox, &PointCloudBox::findPointCloudBoundary, m_scandataManager, &ScandataManager::findPointCloudBoundary);
+	connect(m_scandataManager, &ScandataManager::removeViewPortPointCloud, m_vtkWidget, &VTKWidget::removeViewPortPointClouds);
+	connect(m_scandataManager, static_cast<void(ScandataManager::*)(int, QVector<PointCloudT::Ptr>)> (&ScandataManager::updateViewer),
+		m_vtkWidget, static_cast<void(VTKWidget::*)(int, QVector<PointCloudT::Ptr>)> (&VTKWidget::updateViewer));
+	connect(m_scandataManager, static_cast<void(ScandataManager::*)(int, PointCloudT::Ptr)> (&ScandataManager::updateViewer),
+		m_vtkWidget, static_cast<void(VTKWidget::*)(int, PointCloudT::Ptr)> (&VTKWidget::updateViewer));
+	connect(m_scandataManager, &ScandataManager::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
+	connect(m_slicer, &Slicer::stlLayerToPointCloud, m_scandataManager, &ScandataManager::stlLayerToPoint);
+	connect(m_scandataManager, &ScandataManager::addViewer, m_vtkWidget, &VTKWidget::addViewer);
 }
 
 MainWindow::~MainWindow()
@@ -142,15 +149,6 @@ MainWindow::~MainWindow()
 	pclThread.wait();
 }
 
-void MainWindow::updateVTK()
-{
-	m_qvtkWidget->update();
-}
-
-void MainWindow::clearPointData()
-{
-	m_scandataManager->clear();
-}
 
 void MainWindow::createActions()
 {
@@ -169,8 +167,7 @@ void MainWindow::createActions()
 	//创建清空点云操作
 	m_clearPointCloudsAction = new QAction(tr("&Clear point clouds"), this);
 	m_clearPointCloudsAction->setStatusTip(tr("Clear point clouds"));
-	//connect(m_clearPointCloudsAction, &QAction::triggered, m_scandataManager, &ScandataManager::clear);
-	connect(m_clearPointCloudsAction, &QAction::triggered,this, &MainWindow::clearPointData);
+	connect(m_clearPointCloudsAction, &QAction::triggered, m_scandataManager, &ScandataManager::clear);
 
 	//创建退出程序动作
 	m_exitAction = new QAction(tr("&Exit"), this);
@@ -268,7 +265,7 @@ void MainWindow::loadProfile()
 void MainWindow::saveProfile()
 {
 	//若当前没有点云数据，则弹出警告
-	if(!m_scandataManager->isEmpty())
+	if(m_scandataManager->isEmpty())
 		QMessageBox::warning(this, tr("Save scan point data"),
 			tr("no point clouds need to be saved."));
 	//当前有点云数据

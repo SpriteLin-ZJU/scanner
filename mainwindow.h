@@ -18,7 +18,7 @@ class STLRotateDialog;
 class STLScaleDialog;
 class Slicer;
 class QProgressBar;
-class QVTKWidget;
+class VTKWidget;
 class PointCloudBox;
 
 class MainWindow : public QMainWindow
@@ -29,9 +29,6 @@ public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
 	~MainWindow();
 
-	void updateVTK();
-	//PCL≤€
-	void clearPointData();
 private:
 	void createActions();
 	void createMenus();
@@ -46,6 +43,7 @@ private:
 	void openScaleDialog();
 
 	void updateStatusBar(QString& status);
+	void updateProgressBar(QString process, int value);
 	void updateColor();
 	void updateVisible(int id, bool checked);
 
@@ -88,6 +86,6 @@ private:
 	STLScaleDialog* m_stlScaleDialog;
 
 	//PCLœ‡πÿ
-	QVTKWidget* m_qvtkWidget;
+	VTKWidget* m_vtkWidget;
 	PointCloudBox* m_pointCloudBox;
 };

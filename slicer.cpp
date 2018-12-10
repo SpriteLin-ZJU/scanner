@@ -1,10 +1,19 @@
 #include "slicer.h"
 #include <QSettings>
 
+//point cloud library
+#include <iostream>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+
 Slicer::Slicer()
 {
-	m_beginLayer = 0.3;
+	m_beginLayer = 1;
 	updateColor();
+
+
+	qRegisterMetaType<QVector<double>>("QVector<double>");
 }
 
 Slicer::~Slicer()
@@ -34,31 +43,51 @@ void Slicer::slice()
 		getPolyLinePoints(zLayer);
 		zLayer += m_layerHeight;
 	}
-	
 	drawPolyLine();
+	m_sliced = true;
 }
 /*linshi
+typedef pcl::PointXYZI PointT;
+typedef pcl::PointCloud<PointT> PointCloudT;
 void Slicer::linshiyongyong(double _z)
 {
 	for (auto itLayer = m_layers.begin(); itLayer != m_layers.end(); itLayer++) {
 		if ((*itLayer)->z == _z) {
-			double maxLength=-1.0, minLength=10000, aveLength=0.0;
-			int lineCount = 0;
+			PointCloudT::Ptr tempCloud(new PointCloudT);
+			PointT tempPoint;
 			//遍历每个轮廓线的线段
 			for (auto itPolyLine = (*itLayer)->m_polyLines.begin(); itPolyLine != (*itLayer)->m_polyLines.end(); itPolyLine++) {
-				for (int i = 0; i < (*itPolyLine)->m_linkPoints.size() - 1; i++) {
+				for (int i = 0; i < (*itPolyLine)->m_linkPoints.size()-1; i++) {
 					QVector3D point1((*itPolyLine)->m_linkPoints[i]->position);
-					QVector3D point2((*itPolyLine)->m_linkPoints[i + 1]->position);
-					double lineLength = (point1 - point2).length();
-					if (lineLength > maxLength)	maxLength = lineLength;
-					if (lineLength < minLength)	minLength = lineLength;
-					aveLength += lineLength;
-					lineCount++;
+					QVector3D point2((*itPolyLine)->m_linkPoints[i+1]->position);
+					if ((point2 - point1).length() > 0.15) {
+						double deltX = point2.x() - point1.x();
+						double deltY = point2.y() - point1.y();
+						double lamb = 0.1 / (point2 - point1).length();
+						QVector3D currentPoint(point1);
+						while ((currentPoint - point1).length() < (point2 - point1).length()) {
+							tempPoint.x = currentPoint.x();
+							tempPoint.y = currentPoint.y();
+							tempPoint.z = 29.2F;
+							tempPoint.intensity = 0;
+							tempCloud->push_back(tempPoint);
+							currentPoint.setX(lamb*deltX + currentPoint.x());
+							currentPoint.setY(lamb*deltY + currentPoint.y());
+						}
+					}
+					else {
+						tempPoint.x = point1.x();
+						tempPoint.y = point1.y();
+						tempPoint.z = 29.2F;
+						tempPoint.intensity = 0;
+						tempCloud->push_back(tempPoint);
+					}
 				}
 			}
 			//输出
-			qDebug() << "Layer Height: " << _z;
-			qDebug() << "Line Count: " << lineCount << "  MaxLength: " << maxLength << "  MinLength: " << minLength << "AverageLength: " << aveLength / lineCount;
+			pcl::io::savePCDFileASCII<PointT>("STL29_2.pcd", *tempCloud);
+			//qDebug() << "Layer Height: " << _z;
+			//qDebug() << "Line Count: " << lineCount << "  MaxLength: " << maxLength << "  MinLength: " << minLength << "AverageLength: " << aveLength / lineCount;
 		}
 	}
 }
@@ -259,6 +288,44 @@ void Slicer::drawPolyLine()
 	ShaderDrawable::update();
 	showGraph();
 	emit updateGraph();
+}
+
+void Slicer::convertLayertoPointCloud(double layer)
+{
+	if (m_sliced == false)	return;
+	for (auto itLayer = m_layers.begin(); itLayer != m_layers.end(); itLayer++) {
+		if (qAbs((*itLayer)->z - layer)<0.0001) {
+			QVector<double> pointX;
+			QVector<double> pointY;
+			//遍历每个轮廓线的线段
+			for (auto itPolyLine = (*itLayer)->m_polyLines.begin(); itPolyLine != (*itLayer)->m_polyLines.end(); itPolyLine++) {
+				for (int i = 0; i < (*itPolyLine)->m_linkPoints.size() - 1; i++) {
+					QVector3D point1((*itPolyLine)->m_linkPoints[i]->position);
+					QVector3D point2((*itPolyLine)->m_linkPoints[i + 1]->position);
+					//如果线段大于0.15mm,密化
+					if ((point2 - point1).length() > 0.15) {
+						double deltX = point2.x() - point1.x();
+						double deltY = point2.y() - point1.y();
+						double lamb = 0.1 / (point2 - point1).length();
+						QVector3D currentPoint(point1);
+						while ((currentPoint - point1).length() < (point2 - point1).length()) {
+							pointX.push_back(currentPoint.x());
+							pointY.push_back(currentPoint.y());
+							currentPoint.setX(lamb*deltX + currentPoint.x());
+							currentPoint.setY(lamb*deltY + currentPoint.y());
+						}
+					}
+					else {
+						pointX.push_back(point1.x());
+						pointY.push_back(point1.y());
+					}
+				}
+			}
+			//输出
+			emit stlLayerToPointCloud(pointX, pointY, layer);
+			break;
+		}
+	}
 }
 
 bool Slicer::updateData()

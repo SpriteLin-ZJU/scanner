@@ -11,6 +11,7 @@ class QTimer;
 class GcodeManager;
 class STLManager;
 class ScandataManager;
+class QDoubleSpinBox;
 
 class PrinterBox : public QWidget
 {
@@ -36,6 +37,7 @@ signals:
 	void stopProfileTrans();
 	void updateColor();
 	void openPcdFile(QString);
+	void convertLayerToPointCloud(double layer);
 private:
 	const int BUFFER_SIZE = 127;
 	//iterator
@@ -65,13 +67,19 @@ private:
 	QPushButton* m_sendCodeButton;
 	QPushButton* m_printButton;
 	QPushButton* m_sliceButton;
+	QPushButton* m_scanSendButton;
 	QPushButton* m_settingsButton;
+	QLabel* m_layerPointLabel;
+	QDoubleSpinBox* m_layerPointSpinBox;
+	QPushButton* m_layerPointButton;
 	
 	void initPorts();
 	void connectPort();
 	void changeConnectState();
 	void sendManuGcode();
 	void printGcode();
+	void onScanSendButtonClicked();
+	void onConvertButtonClicked();
 	void printSettings();
 
 	void onSerialReadyRead();

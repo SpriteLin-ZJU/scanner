@@ -256,14 +256,16 @@ void ScannerBox::stopProfileTrans()
 	m_transButton->setText(tr("Start"));
 
 	//处理接收到的数据,分配向量所需大小
-	std::vector<double> vdValueX;
+	std::vector<double> vdValueY;
 	std::vector<double> vdValueZ;
-	vdValueX.reserve(vucProfileBuffer.size() / 64);
-	vdValueZ.reserve(vucProfileBuffer.size() / 64);
+	std::vector<unsigned short> vMaxIntensity;
+	vdValueY.resize(vucProfileBuffer.size() / 64);
+	vdValueZ.resize(vucProfileBuffer.size() / 64);
+	vMaxIntensity.resize(vucProfileBuffer.size() / 64);
 
 	for (int i = 0; i < vucProfileBuffer.size() / (64*m_uiResolution); i++) {
-		m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[i*m_uiResolution*64], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL,
-			NULL, NULL, &vdValueX[i*m_uiResolution], &vdValueZ[i*m_uiResolution], NULL, NULL);
+		m_iRetValue = m_scanner->ConvertProfile2Values(&vucProfileBuffer[i*m_uiResolution*64], m_uiResolution, PROFILE, m_tscanCONTROLType, 0, true, NULL, &vMaxIntensity[i*m_uiResolution],
+			 NULL, &vdValueY[i*m_uiResolution], &vdValueZ[i*m_uiResolution], NULL, NULL);
 	}
 	
 	if (((m_iRetValue & CONVERT_X) == 0) || ((m_iRetValue & CONVERT_Z) == 0))
@@ -273,19 +275,20 @@ void ScannerBox::stopProfileTrans()
 	}
 
 	//将点云转为存入m_scandataManager
-	QVector<double> valueX = QVector<double>::fromStdVector(vdValueX);
+	QVector<double> valueY = QVector<double>::fromStdVector(vdValueY);
 	QVector<double> valueZ = QVector<double>::fromStdVector(vdValueZ);
-		//计算Y值
-	double stepY = m_scanFeedrate / (m_uiscanRate*60.0);
-	unsigned int profileCount = valueX.size() / m_uiResolution;
-	QVector<double> valueY;
-	valueY.reserve(valueX.size());
+	QVector<unsigned short> intensity = QVector<unsigned short>::fromStdVector(vMaxIntensity);
+		//计算X值
+	double stepX = m_scanFeedrate / (m_uiscanRate*60.0);
+	unsigned int profileCount = valueY.size() / m_uiResolution;
+	QVector<double> valueX;
+	valueX.reserve(valueY.size());
 
 	for (int i = 0; i < profileCount; i++)
 		for (int j = 0; j < m_uiResolution; j++)
-			valueY.push_back(stepY*i - 125.0);
+			valueX.push_back(stepX*i);
 	//转为PCL点云
-	m_scandataManager->scandataToPoint(valueX, valueY, valueZ, m_uiResolution);
+	m_scandataManager->scandataToPoint(valueX, valueY, valueZ, intensity, m_uiResolution);
 
 	//更新图像
 	emit drawPointClouds();

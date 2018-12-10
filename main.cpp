@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	QSurfaceFormat::setDefaultFormat(format);
 	
 	MainWindow w;
-	w.resize(1280, 800);
+	w.resize(1280, 900);
 	w.setWindowTitle("3D Printer Control Software");
 	w.show();
 	return a.exec();

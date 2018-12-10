@@ -28,11 +28,17 @@
       <Extensions>moc;h;cpp</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
-    <Filter Include="Header Files\Dialogs">
-      <UniqueIdentifier>{e828c23a-e1bd-42aa-a08d-ca53fe75aa0f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Diaglogs">
       <UniqueIdentifier>{c3f00776-34e6-4f40-837b-174b1081c70a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Diaglogs">
+      <UniqueIdentifier>{e828c23a-e1bd-42aa-a08d-ca53fe75aa0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Drawer">
+      <UniqueIdentifier>{2a66d62b-9d5a-4d50-a578-d4f3f81e88e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Drawer">
+      <UniqueIdentifier>{a3a5dbea-9737-4c59-85cc-987fde0e1308}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -57,25 +63,7 @@
     <ClCompile Include="printerbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shaderdrawable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="origindrawer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="netdrawer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scannerdrawer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gcodemanager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gcodedrawer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stldrawer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stlmanager.cpp">
@@ -111,6 +99,27 @@
     <ClCompile Include="pointcloudbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gcodedrawer.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="netdrawer.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="origindrawer.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="scannerdrawer.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="shaderdrawable.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="stldrawer.cpp">
+      <Filter>Source Files\Drawer</Filter>
+    </ClCompile>
+    <ClCompile Include="vtkwidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="mainwindow.h">
@@ -125,46 +134,49 @@
     <QtMoc Include="printerbox.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="scannerdrawer.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="gcodemanager.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="gcodedrawer.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="stldrawer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="stlmanager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="settingsdialog.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\Diaglogs</Filter>
     </QtMoc>
     <QtMoc Include="stlmovedialog.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\Diaglogs</Filter>
     </QtMoc>
     <QtMoc Include="stlrotatedialog.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\Diaglogs</Filter>
     </QtMoc>
     <QtMoc Include="stlscaledialog.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\Diaglogs</Filter>
     </QtMoc>
     <QtMoc Include="slicer.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="shaderdrawable.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="printsettingsdialog.h">
-      <Filter>Header Files\Dialogs</Filter>
+      <Filter>Header Files\Diaglogs</Filter>
     </QtMoc>
     <QtMoc Include="scandatamanager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="pointcloudbox.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="gcodedrawer.h">
+      <Filter>Header Files\Drawer</Filter>
+    </QtMoc>
+    <QtMoc Include="stldrawer.h">
+      <Filter>Header Files\Drawer</Filter>
+    </QtMoc>
+    <QtMoc Include="scannerdrawer.h">
+      <Filter>Header Files\Drawer</Filter>
+    </QtMoc>
+    <QtMoc Include="shaderdrawable.h">
+      <Filter>Header Files\Drawer</Filter>
+    </QtMoc>
+    <QtMoc Include="vtkwidget.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>
@@ -188,17 +200,17 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="origindrawer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="netdrawer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="layer.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="netdrawer.h">
+      <Filter>Header Files\Drawer</Filter>
+    </ClInclude>
+    <ClInclude Include="origindrawer.h">
+      <Filter>Header Files\Drawer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QDeBug>
 #include <QSettings>
+#include <QDoubleSpinBox>
 
 #include "gcodemanager.h"
 #include "stlmanager.h"
@@ -46,8 +47,16 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	m_printButton->setDisabled(true);
 	m_sliceButton = new QPushButton(tr("Slice"), this);
 	m_sliceButton->setDisabled(true);
+	m_scanSendButton = new QPushButton(tr("Scan"), this);
+	m_scanSendButton->setDisabled(true);
 	m_settingsButton = new QPushButton(tr("Settings"), this);
-
+	//
+	m_layerPointLabel = new QLabel(tr("Layer Point:"), this);
+	m_layerPointSpinBox = new QDoubleSpinBox(this);
+	m_layerPointSpinBox->setSingleStep(0.2);
+	m_layerPointSpinBox->setRange(0.2, 150.0);
+	m_layerPointSpinBox->setValue(0.2);
+	m_layerPointButton = new QPushButton(tr("Convert"), this);
 	//布局
 	QGridLayout* printerBoxLayout = new QGridLayout;
 	printerBoxLayout->addWidget(m_portLabel, 0, 0, 1, 1);
@@ -62,8 +71,13 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	printerBoxLayout->addWidget(m_manuCodeEdit, 3, 1, 1, 1);
 	printerBoxLayout->addWidget(m_sendCodeButton, 3, 2, 1, 1);
 	printerBoxLayout->addWidget(m_settingsButton, 4, 0, 1, 1);
-	printerBoxLayout->addWidget(m_sliceButton, 4, 1, 1, 2);
-	printerBoxLayout->addWidget(m_printButton, 5, 0, 1, 3);
+	printerBoxLayout->addWidget(m_sliceButton, 4, 1, 1, 1);
+	printerBoxLayout->addWidget(m_scanSendButton, 4, 2, 1, 1);
+	//
+	printerBoxLayout->addWidget(m_layerPointLabel, 5, 0, 1, 1);
+	printerBoxLayout->addWidget(m_layerPointSpinBox, 5, 1, 1, 1);
+	printerBoxLayout->addWidget(m_layerPointButton, 5, 2, 1, 1);
+	printerBoxLayout->addWidget(m_printButton, 6, 0, 1, 3);
 
 	m_printGroupBox->setLayout(printerBoxLayout);
 	QHBoxLayout* mainLayout = new QHBoxLayout;
@@ -83,6 +97,9 @@ PrinterBox::PrinterBox(QWidget *parent) :
 	connect(m_serialPort, &QSerialPort::readyRead, this, &PrinterBox::onSerialReadyRead);
 	connect(m_sliceButton, &QPushButton::clicked, this, &PrinterBox::emitSliceSignal);
 	connect(m_settingsButton, &QPushButton::clicked, this, &PrinterBox::printSettings);
+	connect(m_scanSendButton, &QPushButton::clicked, this, &PrinterBox::onScanSendButtonClicked);
+	connect(m_layerPointButton, &QPushButton::clicked, this, &PrinterBox::onConvertButtonClicked);
+
 }
 
 
@@ -147,6 +164,7 @@ void PrinterBox::connectPort()
 
 			m_printConnectButton->setText("Disconnect");
 			m_sendCodeButton->setEnabled(true);
+			m_scanSendButton->setEnabled(true);
 		}
 	}
 }
@@ -308,6 +326,18 @@ void PrinterBox::printGcode()
 		if (m_printConnectButton->text() == "Disconnect")
 			m_printButton->setEnabled(true);
 	}
+}
+
+void PrinterBox::onScanSendButtonClicked()
+{
+	emit startProfileTrans();
+	m_serialPort->write((m_manuCodeEdit->text() + "\r").toLatin1());
+	m_manuCodeEdit->clear();
+}
+
+void PrinterBox::onConvertButtonClicked()
+{
+	emit convertLayerToPointCloud(m_layerPointSpinBox->value());
 }
 
 void PrinterBox::printSettings()

@@ -29,14 +29,17 @@ public:
 	double getZMax(QSharedPointer<Triangle> spSurface);
 	double getZMid(QSharedPointer<Triangle> spSurface);					//处于中间的顶点Z值
 
-	void linshiyongyong(double _z);
+	//void linshiyongyong(double _z);
 
 	void updateColor() override;
 	//槽
 	void drawPolyLine();
+	void convertLayertoPointCloud(double layer);
 protected:
 	bool updateData() override;
 
+signals:
+	void stlLayerToPointCloud(QVector<double> valueX, QVector<double> valueY, double z);
 private:
 	QVector<QSharedPointer<Edge>> m_sliceEdges;	//存储相交边
 	QVector<QSharedPointer<Layer>> m_layers;	//存储片层
@@ -44,4 +47,5 @@ private:
 	double m_beginLayer;
 	double m_layerHeight;
 	STLManager* m_stlManager;
+	bool m_sliced = false;
 };
