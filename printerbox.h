@@ -28,7 +28,7 @@ public:
 	void setScandataManager(ScandataManager* manager);
 	void emitSliceSignal() { emit sliceSignal(); }
 signals:
-	void updateStatus(QString&);
+	void updateStatus(const QString&);
 	void drawSingleGcode();
 	void drawSTLFile();
 	void sliceSignal();
@@ -36,7 +36,7 @@ signals:
 	void startProfileTrans();
 	void stopProfileTrans();
 	void updateColor();
-	void openPcdFile(QString);
+	void openPcdFile(const QString&);
 	void convertLayerToPointCloud(double layer);
 private:
 	const int BUFFER_SIZE = 127;

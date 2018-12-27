@@ -15,6 +15,7 @@
 #include "stlrotatedialog.h"
 #include "stlscaledialog.h"
 #include "pointcloudbox.h"
+#include "pointcloudlistwidget.h"
 #include "vtkwidget.h"
 
 #include <QAction>
@@ -28,6 +29,7 @@
 #include <QFileDialog>
 #include <QProgressBar>
 #include <QTabWidget>
+#include <QMetaType>
 #include "QVTKWidget.h"
 #include <vtkRenderWindow.h>
 
@@ -37,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
 	m_scannerBox = new ScannerBox(this);
 	m_printerBox = new PrinterBox(this);
 	m_pointCloudBox = new PointCloudBox(this);
-
+	m_pointCloudListWidget = new PointCloudListWidget(this);
 	//manager
 	m_gcodeManager = new GcodeManager();
 	m_stlManager = new STLManager();
@@ -63,22 +65,36 @@ MainWindow::MainWindow(QWidget *parent)
 	createStatusBar();
 
 	//左侧布局
-	QWidget* widget = new QWidget;
-	QVBoxLayout* vlayout = new QVBoxLayout;
-	vlayout->addWidget(m_scannerBox);
-	vlayout->addWidget(m_printerBox);
-	vlayout->addWidget(m_pointCloudBox);
-	vlayout->addStretch();
+	QWidget* basicWidget = new QWidget(this);
+	QVBoxLayout* vLayoutBasic = new QVBoxLayout;
+	vLayoutBasic->addWidget(m_scannerBox);
+	vLayoutBasic->addWidget(m_printerBox);
+	vLayoutBasic->addStretch();
+	basicWidget->setLayout(vLayoutBasic);
+
+	QWidget* pointcloudWidget = new QWidget(this);
+	QVBoxLayout* vLayoutPointCloud = new QVBoxLayout;
+	vLayoutPointCloud->addWidget(m_pointCloudListWidget, 0);
+	vLayoutPointCloud->addWidget(m_pointCloudBox,0);
+	vLayoutPointCloud->addStretch();
+	vLayoutPointCloud->addStretch();
+	pointcloudWidget->setLayout(vLayoutPointCloud);
+
+	QTabWidget* controlTabWidget = new QTabWidget(this);
+	controlTabWidget->addTab(basicWidget, tr("Basic"));
+	controlTabWidget->addTab(pointcloudWidget, tr("PointCloud"));
+	controlTabWidget->setTabPosition(QTabWidget::West);
 	//显示布局
-	QTabWidget* GLTabWidget = new QTabWidget;
+	QTabWidget* GLTabWidget = new QTabWidget(this);
 	GLTabWidget->addTab(m_glwidget, tr("3DP"));
 	GLTabWidget->addTab(m_vtkWidget, tr("Point clouds"));
 	//布局
+	QWidget* mainWidget = new QWidget(this);
 	QHBoxLayout* hlayout = new QHBoxLayout;
-	hlayout->addLayout(vlayout,0);
+	hlayout->addWidget(controlTabWidget,0);
 	hlayout->addWidget(GLTabWidget, 1);
-	widget->setLayout(hlayout);
-	setCentralWidget(widget);
+	mainWidget->setLayout(hlayout);
+	setCentralWidget(mainWidget);
 
 	//添加需要绘制的drawable
 	m_originDrawer = new OriginDrawer();
@@ -105,6 +121,9 @@ MainWindow::MainWindow(QWidget *parent)
 	m_stlRotateDialog = new STLRotateDialog(this);
 	m_stlScaleDialog = new STLScaleDialog(this);
 
+	//init Connection
+	qRegisterMetaType<QStringList>("QStringList&");
+
 	connect(m_scannerBox, &ScannerBox::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_scannerBox, &ScannerBox::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
 	connect(m_printerBox, &PrinterBox::updateStatus, this, &MainWindow::updateStatusBar);
@@ -126,21 +145,25 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(m_printerBox, &PrinterBox::updateColor, this, &MainWindow::updateColor);
 	connect(m_glwidget, &GLWidget::updateVisible, this, &MainWindow::updateVisible);
 	//ScandataManager
-	connect(m_scandataManager, &ScandataManager::updateStatus, this, &MainWindow::updateStatusBar, Qt::BlockingQueuedConnection);
+	connect(m_scandataManager, &ScandataManager::updateStatus, this, &MainWindow::updateStatusBar);
 	connect(m_printerBox, &PrinterBox::openPcdFile, m_scandataManager, &ScandataManager::openPcdFile);
 	connect(m_pointCloudBox, &PointCloudBox::filterPointCloud, m_scandataManager, &ScandataManager::filterPointCloud);
 	connect(m_pointCloudBox, &PointCloudBox::sacPointCloud, m_scandataManager, &ScandataManager::sacPointCloud);
 	connect(m_pointCloudBox, &PointCloudBox::icpPointCloud, m_scandataManager, &ScandataManager::icpPointCloud);
-	connect(m_pointCloudBox, &PointCloudBox::resetPointCloud, m_scandataManager, &ScandataManager::resetPointCloud);
+	connect(m_pointCloudBox, &PointCloudBox::clearPointCloud, m_scandataManager, &ScandataManager::clear);
 	connect(m_pointCloudBox, &PointCloudBox::findPointCloudBoundary, m_scandataManager, &ScandataManager::findPointCloudBoundary);
 	connect(m_scandataManager, &ScandataManager::removeViewPortPointCloud, m_vtkWidget, &VTKWidget::removeViewPortPointClouds);
-	connect(m_scandataManager, static_cast<void(ScandataManager::*)(int, QVector<PointCloudT::Ptr>)> (&ScandataManager::updateViewer),
-		m_vtkWidget, static_cast<void(VTKWidget::*)(int, QVector<PointCloudT::Ptr>)> (&VTKWidget::updateViewer));
-	connect(m_scandataManager, static_cast<void(ScandataManager::*)(int, PointCloudT::Ptr)> (&ScandataManager::updateViewer),
-		m_vtkWidget, static_cast<void(VTKWidget::*)(int, PointCloudT::Ptr)> (&VTKWidget::updateViewer));
+	connect(m_scandataManager, &ScandataManager::repaintPointCloudViewer, m_vtkWidget, &VTKWidget::repaintPointCloudViewer);
 	connect(m_scandataManager, &ScandataManager::drawPointClouds, m_scannerDrawer, &ScannerDrawer::drawScandataGL);
 	connect(m_slicer, &Slicer::stlLayerToPointCloud, m_scandataManager, &ScandataManager::stlLayerToPoint);
-	connect(m_scandataManager, &ScandataManager::addViewer, m_vtkWidget, &VTKWidget::addViewer);
+	connect(m_scandataManager, &ScandataManager::updatePointCloudViewer, m_vtkWidget, &VTKWidget::updatePointCloudViewer);
+
+	//PointCloudList与ScandataManager信号槽
+	connect(m_pointCloudListWidget, &PointCloudListWidget::signalDragPcdFile, m_scandataManager, &ScandataManager::openPcdFile);
+	connect(m_scandataManager, &ScandataManager::signalAddPointCloudList, m_pointCloudListWidget, &PointCloudListWidget::onAddPointCloudList);
+	connect(m_scandataManager, &ScandataManager::signalClearPointCloudList, m_pointCloudListWidget, &PointCloudListWidget::clear);
+	connect(m_pointCloudListWidget, &PointCloudListWidget::itemSelectionChanged, this, &MainWindow::onPointCloudSelectionChanged);
+	connect(this, &MainWindow::SignalUpdateSelectedPointClouds, m_scandataManager, &ScandataManager::onUpdateCurrentPointCloud);
 }
 
 MainWindow::~MainWindow()
@@ -149,6 +172,16 @@ MainWindow::~MainWindow()
 	pclThread.wait();
 }
 
+/*更新当前选中的点云，通知ScandataManager*/
+void MainWindow::onPointCloudSelectionChanged()
+{
+	QList<QListWidgetItem*> currentSelectedItems = m_pointCloudListWidget->selectedItems();
+	QStringList stCurrentSelectedItems;
+	for (auto item : currentSelectedItems)
+		stCurrentSelectedItems.append(item->text());
+	//通知ScandataManager更新选中点云
+	emit SignalUpdateSelectedPointClouds(stCurrentSelectedItems);
+}
 
 void MainWindow::createActions()
 {
@@ -305,7 +338,7 @@ void MainWindow::openScaleDialog()
 	m_stlScaleDialog->show();
 }
 
-void MainWindow::updateStatusBar(QString & status)
+void MainWindow::updateStatusBar(const QString & status)
 {
 	m_statusLabel->setText(status);
 }

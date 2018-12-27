@@ -14,15 +14,15 @@ STLRotateDialog::STLRotateDialog(QWidget* parent)
 	m_zRotLabel->setStyleSheet("color:blue;");
 
 	m_xRotSpinBox = new QDoubleSpinBox(this);
-	m_xRotSpinBox->setSingleStep(90);
+	m_xRotSpinBox->setSingleStep(45);
 	m_xRotSpinBox->setRange(-180.0, 180.0);
 	m_xRotSpinBox->setSuffix(" degree");
 	m_yRotSpinBox = new QDoubleSpinBox(this);
-	m_yRotSpinBox->setSingleStep(90);
+	m_yRotSpinBox->setSingleStep(45);
 	m_yRotSpinBox->setRange(-180.0, 180.0);
 	m_yRotSpinBox->setSuffix(" degree");
 	m_zRotSpinBox = new QDoubleSpinBox(this);
-	m_zRotSpinBox->setSingleStep(90);
+	m_zRotSpinBox->setSingleStep(45);
 	m_zRotSpinBox->setRange(-180.0, 180.0);
 	m_zRotSpinBox->setSuffix(" degree");
 

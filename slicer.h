@@ -23,6 +23,7 @@ public:
 
 	void interSect(double z, QSharedPointer<Triangle> spSurface);		//轮廓求交算法初始化，求出第一条交线和第一个交点
 	QVector3D calcuInterSectPoint(double z, QSharedPointer<Edge> spEdge);
+	QVector3D calcuScanLineSectPoint(double scanLineY, QSharedPointer<LayerEdge> spLayerEdge);
 	void judgeFaceType(double z, QSharedPointer<Triangle> spSurface);	//判断面片类型
 	void judgeOtherLine(double z, QSharedPointer<Triangle> spSurface);	//判断另一条相交线
 	double getZMin(QSharedPointer<Triangle> spSurface);					//返回面片的最小Z坐标值

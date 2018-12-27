@@ -77,3 +77,13 @@ struct Layer
 	double z;
 	QVector<QSharedPointer<PolyLine>> m_polyLines;
 };
+
+struct LayerEdge
+{
+	LayerEdge();
+	LayerEdge(QSharedPointer<PointTri> _spHead, QSharedPointer<PointTri> _spEnd);
+	QSharedPointer<PointTri> spLEHead;
+	QSharedPointer<PointTri> spLEEnd;
+	QSharedPointer<PointTri> spVMax, spVMin;
+	void sortVertex();
+};

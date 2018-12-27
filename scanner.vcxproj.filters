@@ -40,12 +40,15 @@
     <Filter Include="Header Files\Drawer">
       <UniqueIdentifier>{a3a5dbea-9737-4c59-85cc-987fde0e1308}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\GUI">
+      <UniqueIdentifier>{ccaaefda-1a8b-4bb9-959d-b73ee14a9105}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GUI">
+      <UniqueIdentifier>{8a4bcd88-0055-4b2a-b54c-4d3e5da0a612}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mainwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DllLoader.cpp">
@@ -54,13 +57,7 @@
     <ClCompile Include="InterfaceLLT_2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scannerbox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="glwidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="printerbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gcodemanager.cpp">
@@ -96,9 +93,6 @@
     <ClCompile Include="scandatamanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pointcloudbox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gcodedrawer.cpp">
       <Filter>Source Files\Drawer</Filter>
     </ClCompile>
@@ -120,18 +114,24 @@
     <ClCompile Include="vtkwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mainwindow.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="pointcloudbox.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="printerbox.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="scannerbox.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="pointcloudlistwidget.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="mainwindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="glwidget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="scannerbox.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="printerbox.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="gcodemanager.h">
@@ -161,9 +161,6 @@
     <QtMoc Include="scandatamanager.h">
       <Filter>Header Files</Filter>
     </QtMoc>
-    <QtMoc Include="pointcloudbox.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
     <QtMoc Include="gcodedrawer.h">
       <Filter>Header Files\Drawer</Filter>
     </QtMoc>
@@ -178,6 +175,21 @@
     </QtMoc>
     <QtMoc Include="vtkwidget.h">
       <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="mainwindow.h">
+      <Filter>Header Files\GUI</Filter>
+    </QtMoc>
+    <QtMoc Include="pointcloudbox.h">
+      <Filter>Header Files\GUI</Filter>
+    </QtMoc>
+    <QtMoc Include="printerbox.h">
+      <Filter>Header Files\GUI</Filter>
+    </QtMoc>
+    <QtMoc Include="scannerbox.h">
+      <Filter>Header Files\GUI</Filter>
+    </QtMoc>
+    <QtMoc Include="pointcloudlistwidget.h">
+      <Filter>Header Files\GUI</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>

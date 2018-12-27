@@ -21,9 +21,8 @@ public:
 	~VTKWidget();
 
 	//²ÛÐÅºÅ
-	void updateViewer(int viewPort, QVector<PointCloudT::Ptr> clouds);
-	void updateViewer(int viewPort, PointCloudT::Ptr cloud);
-	void addViewer(int viewPort, PointCloudT::Ptr cloud, QString id);
+	void repaintPointCloudViewer(int viewPort, const QMap<QString, PointCloudT::Ptr>& clouds);
+	void updatePointCloudViewer(int viewPort, PointCloudT::Ptr cloud, const QString& id);
 	void removeViewPortPointClouds(int viewPort);
 signals:
 

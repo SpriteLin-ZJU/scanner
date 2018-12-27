@@ -27,7 +27,7 @@ public:
 	void setScandataManager(ScandataManager* manager);
 	void setScanFeedrate(int feedrate);
 signals:
-	void updateStatus(QString& );
+	void updateStatus(const QString& );
 	void drawPointClouds();
 private:
 	void ipSearch();

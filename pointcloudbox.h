@@ -18,14 +18,13 @@ public:
 	//²Ûº¯Êý
 	void onFilterButtonClicked();
 	void onSACButtonClicked();
-	void onResetButtonClicked();
 	void onICPButtonClicked();
 	void onBoundaryButtonClicked();
 
 signals:
 	void filterPointCloud(int meanK, double thresh);
 	void sacPointCloud(int maxIterations, double thresh);
-	void resetPointCloud();
+	void clearPointCloud();
 	void icpPointCloud(int maxIterations, double eucliEpsilon);
 	void findPointCloudBoundary(int maxSacIterations, double sacThresh, int normKSearch, int boundKSearch);
 private:
@@ -36,7 +35,7 @@ private:
 
 	QGroupBox* m_pointCloudGroupBox;
 	QTabWidget* m_tabWidget;
-	QPushButton* m_resetButton;
+	QPushButton* m_clearButton;
 	//Filter
 	QLabel* m_filterMeanKLabel;
 	QSpinBox* m_filterMeanKSpinBox;

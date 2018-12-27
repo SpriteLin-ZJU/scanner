@@ -20,6 +20,7 @@ class Slicer;
 class QProgressBar;
 class VTKWidget;
 class PointCloudBox;
+class PointCloudListWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -28,7 +29,11 @@ class MainWindow : public QMainWindow
 public:
 	MainWindow(QWidget *parent = Q_NULLPTR);
 	~MainWindow();
-
+	
+	//≤€
+	void onPointCloudSelectionChanged();
+signals:
+	void SignalUpdateSelectedPointClouds(const QStringList&);
 private:
 	void createActions();
 	void createMenus();
@@ -42,7 +47,7 @@ private:
 	void openRotateDialog();
 	void openScaleDialog();
 
-	void updateStatusBar(QString& status);
+	void updateStatusBar(const QString& status);
 	void updateProgressBar(QString process, int value);
 	void updateColor();
 	void updateVisible(int id, bool checked);
@@ -88,4 +93,5 @@ private:
 	//PCLœ‡πÿ
 	VTKWidget* m_vtkWidget;
 	PointCloudBox* m_pointCloudBox;
+	PointCloudListWidget* m_pointCloudListWidget;
 };

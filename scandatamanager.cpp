@@ -13,13 +13,14 @@
 #include <pcl/features/boundary.h>
 #include <QDebug>
 #include <QMetaType>
+#include <QFileInfo>
 
 ScandataManager::ScandataManager()
-	:m_finalCloud(NULL),m_stlLayerCloud(NULL)
 {
 	//若槽连接为blocking，怎么不用注册。
-	qRegisterMetaType<QVector<PointCloudT::Ptr>>("QVector<PointCloudT::Ptr>");
+	qRegisterMetaType<QMap<QString, PointCloudT::Ptr>>("QMap<QString, PointCloudT::Ptr>");
 	qRegisterMetaType<PointCloudT::Ptr>("PointCloudT::Ptr");
+	qRegisterMetaType<QString>("QString&");
 }
 
 ScandataManager::~ScandataManager()
@@ -28,7 +29,7 @@ ScandataManager::~ScandataManager()
 
 bool ScandataManager::isEmpty()
 {
-	return(m_clouds.isEmpty() && m_filteredClouds.isEmpty() && (m_finalCloud == NULL) && (m_stlLayerCloud == NULL));
+	return(m_mapSrcToPointCloud.isEmpty());
 }
 
 void ScandataManager::scandataToPoint(QVector<double> valueX, QVector<double> valueY, QVector<double> valueZ, QVector<unsigned short> intensity,unsigned int resolution)
@@ -46,10 +47,11 @@ void ScandataManager::scandataToPoint(QVector<double> valueX, QVector<double> va
 		tempCloud->push_back(tempPoint);
 	}
 	tempCloud->is_dense = true;
-	m_clouds.push_back(tempCloud);
-	qDebug() << "Saved " << tempCloud->points.size() << " data points \n"
-		<< "now we have " << m_clouds.size() << " point clouds" << endl;
-	emit updateViewer(1, m_clouds);
+
+	//映射点云名称到点云
+	QString srcName = m_mapSrcToPointCloud.mapSrcToPointCloud("Scandata", tempCloud);
+	emit signalAddPointCloudList(srcName);
+	qDebug() << "Saved " << tempCloud->points.size() << " data points \n" << endl;
 }
 
 void ScandataManager::stlLayerToPoint(QVector<double> valueX, QVector<double> valueY, double z)
@@ -63,13 +65,20 @@ void ScandataManager::stlLayerToPoint(QVector<double> valueX, QVector<double> va
 		tempCloud->push_back(tempPoint);
 	}
 	tempCloud->is_dense = true;
-	m_stlLayerCloud.swap(tempCloud);
-	emit addViewer(1, m_stlLayerCloud,"LayerCloud");
+
+	//映射点云名称到点云
+	QString srcName = m_mapSrcToPointCloud.mapSrcToPointCloud("StlLayerCloud", tempCloud);
+	emit signalAddPointCloudList(srcName);
 }
 
-void ScandataManager::openPcdFile(QString path)
+void ScandataManager::openPcdFile(const QString& path)
 {
+	QFileInfo fileInfo(path);
+	if (fileInfo.suffix() != "pcd")
+		return;
+
 	emit updateStatus(tr("Opening PCD file."));
+	//打开文件
 	PointCloudT::Ptr tempCloud(new PointCloudT);
 	if (pcl::io::loadPCDFile<PointT>(path.toStdString(), *tempCloud) == -1) {
 		qDebug() << "Couldn't read file \n" << endl;
@@ -82,206 +91,165 @@ void ScandataManager::openPcdFile(QString path)
 	std::vector<int> indices;
 	pcl::removeNaNFromPointCloud(*tempCloud, *tempCloud, indices);
 	qDebug() << "Remove " << indices.size() << "invalid Points." << endl;
-	//存入点云向量
-	m_clouds.push_back(tempCloud);
+	
+	//映射文件名与点云指针
+	QString srcName = m_mapSrcToPointCloud.mapSrcToPointCloud(fileInfo.fileName(), tempCloud);
+	emit signalAddPointCloudList(srcName);
 
-	emit updateViewer(1, m_clouds);
+	//存入点云向量
 	emit updateStatus(tr("Open PCD file sucessful."));
+	//在opengl界面绘制
 	emit drawPointClouds();
 }
 
+//保存当前选中的点云
 void ScandataManager::savePcdFile(QString path)
 {
 	path=path.left(path.length() - 4);
-	for (int i = 0; i < m_clouds.size(); i++) {
-		std::string savePath = path.toStdString() + '_' + std::to_string(i)+".pcd";
-		pcl::io::savePCDFileASCII<PointT> (savePath, *(m_clouds[i]));
-		qDebug() << "Saved " << m_clouds[i]->points.size() 
-				<< " data points to " << QString::fromStdString(savePath) << endl;
-	}
-	for (int i = 0; i < m_filteredClouds.size(); i++) {
-		std::string savePath = path.toStdString() + '_' + std::to_string(i)+"filtered" + ".pcd";
-		pcl::io::savePCDFileASCII<PointT>(savePath, *(m_filteredClouds[i]));
-		qDebug() << "Saved " << m_filteredClouds[i]->points.size()
+
+	if (m_currentSelectedPointClouds.size() == 0)
+		return;
+	int i = 0;
+	for (auto srcName : m_currentSelectedPointClouds.keys()) {
+		QString suffix = (m_currentSelectedPointClouds.size() == 1) ? ".pcd" : QString::number(i) + ".pcd";
+		std::string savePath = (path + suffix).toStdString();
+		pcl::io::savePCDFileASCII<PointT>(savePath, *m_currentSelectedPointClouds.value(srcName));
+		qDebug() << "Saved " << m_currentSelectedPointClouds[srcName]->points.size()
 			<< " data points to " << QString::fromStdString(savePath) << endl;
-	}
-	if (m_finalCloud != NULL) {
-		std::string savePath = path.toStdString() + '_' + "finalCloud" + ".pcd";
-		pcl::io::savePCDFileASCII<PointT>(savePath, *m_finalCloud);
-	}
-	if (m_stlLayerCloud != NULL) {
-		std::string savePath = path.toStdString() + '_' + "stlLayerCloud" + ".pcd";
-		pcl::io::savePCDFileASCII<PointT>(savePath, *m_stlLayerCloud);
 	}
 }
 
 void ScandataManager::clear()
 {
-	m_clouds.clear();
-	m_filteredClouds.clear();
-	m_finalCloud = NULL;
+	m_mapSrcToPointCloud.clear();
+	m_currentSelectedPointClouds.clear();
+	emit signalClearPointCloudList();
 	emit removeViewPortPointCloud(0);
 	emit drawPointClouds();
 }
 
+/*更新当前选中点云列表*/
+void ScandataManager::onUpdateCurrentPointCloud(const QStringList & currentPointCloud)
+{
+	m_currentSelectedPointClouds.clear();
+	for (auto srcPointCloud : currentPointCloud) {
+		if (m_mapSrcToPointCloud.getPointCloudFromSrc(srcPointCloud) != NULL)
+			m_currentSelectedPointClouds.insert(srcPointCloud, m_mapSrcToPointCloud.getPointCloudFromSrc(srcPointCloud));
+	}
+	emit repaintPointCloudViewer(1, m_currentSelectedPointClouds);
+}
+
 void ScandataManager::filterPointCloud(int meanK, double thresh)
 {
-	if (m_clouds.isEmpty()) {
-		qDebug() << "No clouds in vector!" << endl;
+	if (m_currentSelectedPointClouds.isEmpty() || m_currentSelectedPointClouds.size()>1) {
+		updateStatus("Please select a PointCloud.");
 		return;
 	}
 	emit updateStatus(tr("Filtering Point Cloud."));
-	//如果m_filteredClouds为空，将原点云滤波后存入filteredClouds
-	if (m_filteredClouds.isEmpty()) {
-		for (int i = 0; i < m_clouds.size(); i++) {
-			PointCloudT::Ptr tempCloud(new PointCloudT);
-			pcl::StatisticalOutlierRemoval<PointT> sor;
-			sor.setInputCloud(m_clouds[i]);
-			qDebug() << "Cloud before filtering: " << (m_clouds[i])->points.size() << endl;
-			sor.setMeanK(meanK);
-			sor.setStddevMulThresh(thresh);
-			sor.filter(*tempCloud);
-			qDebug() << "Cloud after filtering: " << tempCloud->points.size() << endl;
-			m_filteredClouds.push_back(tempCloud);
-		}
-	}
-	//若已有已滤波点云
-	else {
-		for (int i = 0; i < m_filteredClouds.size(); i++) {
-			PointCloudT::Ptr tempCloud(new PointCloudT);
-			pcl::StatisticalOutlierRemoval<PointT> sor;
-			sor.setInputCloud(m_filteredClouds[i]);
-			qDebug() << "Cloud before filtering: " << (m_filteredClouds[i])->points.size() << endl;
-			sor.setMeanK(meanK);
-			sor.setStddevMulThresh(thresh);
-			sor.filter(*tempCloud);
-			m_filteredClouds[i].swap(tempCloud);
-			qDebug() << "Cloud after filtering: " << m_filteredClouds[i]->points.size() << endl;
-		}
-	}
+
+	//对点云进行统计滤波
+	QString srcName = m_currentSelectedPointClouds.keys().at(0);
+	PointCloudT::Ptr inputCloud(m_currentSelectedPointClouds.value(srcName));
+	PointCloudT::Ptr tempCloud(new PointCloudT);
+	pcl::StatisticalOutlierRemoval<PointT> sor;
+	sor.setInputCloud(inputCloud);
+	qDebug() << "Cloud before filtering: " << inputCloud->points.size() << endl;
+	sor.setMeanK(meanK);
+	sor.setStddevMulThresh(thresh);
+	sor.filter(*tempCloud);
+	qDebug() << "Cloud after filtering: " << tempCloud->points.size() << endl;
+	m_mapSrcToPointCloud.updateSrcToPointCloud(srcName, tempCloud);
+
 	//更新点云视图
 	emit updateStatus(tr("Filter complete."));
-	emit updateViewer(2, m_filteredClouds);
+	emit updatePointCloudViewer(2, tempCloud, srcName);
 }
 
 void ScandataManager::sacPointCloud(int maxIterations, double thresh)
 {
-	if (m_clouds.isEmpty()) {
-		qDebug() << "No clouds in vector!" << endl;
+	if (m_currentSelectedPointClouds.isEmpty() || m_currentSelectedPointClouds.size() > 1) {
+		updateStatus("Please select a PointCloud.");
 		return;
 	}
 	emit updateStatus(tr("SAC Point Cloud."));
-	//如果filteredClouds为空，则将m_clouds数据拷入,便于后续程序统一处理
-	if (m_filteredClouds.isEmpty()) {
-		for (int i = 0; i < m_clouds.size(); i++) {
-			PointCloudT::Ptr tempCloud(new PointCloudT);
-			pcl::copyPointCloud(*m_clouds[i], *tempCloud);
-			m_filteredClouds.push_back(tempCloud);
-			qDebug() << "Copy " << tempCloud->points.size() << " data to filteredClouds." << endl;
-		}
-	}
-	else
-		emit updateViewer(1, m_filteredClouds);
+	
+	//在左窗口显示待SAC点云
+	emit removeViewPortPointCloud(0);
+	emit repaintPointCloudViewer(1, m_currentSelectedPointClouds);
+	QString srcName = m_currentSelectedPointClouds.keys().at(0);
 	//SAC分割
-	for (int i = 0; i < m_filteredClouds.size(); i++) {
-		pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-		pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-		// Create the segmentation object
-		pcl::SACSegmentation<PointT> seg;
-		// Optional
-		seg.setOptimizeCoefficients(true);
-		// Mandatory
-		seg.setModelType(pcl::SACMODEL_PLANE);
-		seg.setMethodType(pcl::SAC_RANSAC);
-		seg.setMaxIterations(maxIterations);
-		seg.setDistanceThreshold(thresh);
+	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+	pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+	// Create the segmentation object
+	pcl::SACSegmentation<PointT> seg;
+	// Optional
+	seg.setOptimizeCoefficients(true);
+	// Mandatory
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations(maxIterations);
+	seg.setDistanceThreshold(thresh);
 
-		seg.setInputCloud(m_filteredClouds[i]);
-		seg.segment(*inliers, *coefficients); 
-		if (inliers->indices.size() == 0)
-			qDebug() << "Could not estimate a planar model for the given dataset: m_filteredClouds["<<i<<"]" <<endl;
+	seg.setInputCloud(m_currentSelectedPointClouds.value(srcName));
+	seg.segment(*inliers, *coefficients); 
+	if (inliers->indices.size() == 0)
+		qDebug() << "Could not estimate a planar model for the given dataset: "<< srcName <<endl;
 
-		//Creat the filtering object
-		pcl::ExtractIndices<PointT> extract;
-		extract.setInputCloud(m_filteredClouds[i]);
-		extract.setIndices(inliers);
-		extract.setNegative(true);
-		PointCloudT::Ptr tempCloud(new PointCloudT);
-		extract.filter(*tempCloud);
-		m_filteredClouds[i].swap(tempCloud);
-		qDebug() << "SAC successful." << endl;
-	}
+	//Creat the filtering object
+	pcl::ExtractIndices<PointT> extract;
+	extract.setInputCloud(m_currentSelectedPointClouds.value(srcName));
+	extract.setIndices(inliers);
+	extract.setNegative(true);
+	PointCloudT::Ptr tempCloud(new PointCloudT);
+	extract.filter(*tempCloud);
+	m_mapSrcToPointCloud.updateSrcToPointCloud(srcName, tempCloud);
+	qDebug() << "SAC successful." << endl;
+
 	emit updateStatus(tr("SAC complete."));
 	//更新点云视图
-	emit updateViewer(2, m_filteredClouds);
+	emit updatePointCloudViewer(2, tempCloud, srcName);
 }
 
 void ScandataManager::icpPointCloud(int maxIterations, double eucliEpsilon)
 {
-	if (m_clouds.isEmpty()) {
-		qDebug() << "No clouds in vector!" << endl;
+	if (m_currentSelectedPointClouds.size() != 2) {
+		updateStatus("Please select two PointClouds.");
 		return;
 	}
-	//如果filteredClouds为空，则将m_clouds数据拷入,便于后续程序统一处理
-	if (m_filteredClouds.size()<m_clouds.size()) {
-		for (int i = m_filteredClouds.size(); i < m_clouds.size(); i++) {
-			PointCloudT::Ptr tempCloud(new PointCloudT);
-			pcl::copyPointCloud(*m_clouds[i], *tempCloud);
-			m_filteredClouds.push_back(tempCloud);
-			qDebug() << "Copy " << tempCloud->points.size() << " data to filteredClouds." << endl;
-		}
-	}
-	//点云小于2副，无法配准返回
-	if (m_filteredClouds.size() < 2) {
-		qDebug() << "Less than 2 clouds in vector." << endl;
-		return;
-	}
+	//获取两组点云
+	QString alignedCloudName = m_currentSelectedPointClouds.keys().at(0);
+	QString referenceCloudName = m_currentSelectedPointClouds.keys().at(1);
 	//icp配准
 	emit updateStatus(tr("ICP begin."));
-	PointCloudT::Ptr finalCloud(new PointCloudT);
-	pcl::copyPointCloud(*m_clouds[0], *finalCloud);
-	for (int i = 0; i < m_filteredClouds.size() - 1; i++) {
-		emit updateViewer(1, finalCloud);
-		emit updateViewer(2, m_filteredClouds[i + 1]);
+	//将未配准的两个点云显示在左窗口
+	emit repaintPointCloudViewer(1, m_currentSelectedPointClouds);
+	//icp
+	pcl::IterativeClosestPoint<PointT, PointT> icp;
+	icp.setMaxCorrespondenceDistance(0.1);
+	icp.setTransformationEpsilon(1e-10);
+	icp.setEuclideanFitnessEpsilon(eucliEpsilon);
+	icp.setMaximumIterations(maxIterations);
 
-		pcl::IterativeClosestPoint<PointT, PointT> icp;
-		icp.setMaxCorrespondenceDistance(0.1);
-		icp.setTransformationEpsilon(1e-10);
-		icp.setEuclideanFitnessEpsilon(eucliEpsilon);
-		icp.setMaximumIterations(maxIterations);
+	PointCloudT::Ptr outCloud(new PointCloudT);
+	icp.setInputSource(m_currentSelectedPointClouds.value(alignedCloudName));
+	icp.setInputTarget(m_currentSelectedPointClouds.value(referenceCloudName));
+	icp.align(*outCloud);	//source经过变化后的点云
 
-		PointCloudT::Ptr outCloud(new PointCloudT);
-		icp.setInputSource(m_filteredClouds[i+1]);
-		icp.setInputTarget(finalCloud);
-		icp.align(*outCloud);	//source经过变化后的点云
-
-		*finalCloud += *outCloud;
-	}
 	//下采样
-	emit updateStatus(tr("ICP complete."));
 	//
-	m_finalCloud = finalCloud;
-	emit removeViewPortPointCloud(2);
-	emit updateViewer(1, m_finalCloud);
+	emit updateStatus(tr("ICP complete."));
+	//更新配准后的点云
+	m_mapSrcToPointCloud.updateSrcToPointCloud(alignedCloudName, outCloud);
+	emit repaintPointCloudViewer(2, m_currentSelectedPointClouds);
 }
 
 void ScandataManager::findPointCloudBoundary(int maxSacIterations, double sacThresh, int normKSearch, int boundKSearch)
 {
-	if (m_clouds.isEmpty()) {
-		qDebug() << "No clouds in vector!" << endl;
+	if (m_currentSelectedPointClouds.isEmpty() || m_currentSelectedPointClouds.size() > 1) {
+		updateStatus("Please select a PointCloud.");
 		return;
 	}
-	//finalCloud无数据
-	if (m_finalCloud == NULL || m_finalCloud->size() == 0) {
-		qDebug() << "No point in m_finalCloud" << endl;
-		
-		PointCloudT::Ptr tempCloud(new PointCloudT);
-		if (m_filteredClouds.isEmpty())
-			pcl::copyPointCloud(*m_clouds[0], *tempCloud);
-		else
-			pcl::copyPointCloud(*m_filteredClouds[0], *tempCloud);
-		m_finalCloud.swap(tempCloud);
-	}
+	
 	/*
 	//RANSAC
 	pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
@@ -311,13 +279,17 @@ void ScandataManager::findPointCloudBoundary(int maxSacIterations, double sacThr
 	m_finalCloud.swap(tempCloud);
 	*/
 
-
+	//点云名称
+	QString srcName = m_currentSelectedPointClouds.keys().at(0);
+	//将待提取边界的点云显示在左侧
+	emit removeViewPortPointCloud(0);
+	emit repaintPointCloudViewer(1, m_currentSelectedPointClouds);
 	//NormalEstimation
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
 	pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
 	emit updateStatus(tr("NormalEstimation begin."));
 	pcl::NormalEstimationOMP<PointT, pcl::Normal> normEst;
-	normEst.setInputCloud(m_finalCloud);
+	normEst.setInputCloud(m_currentSelectedPointClouds.value(srcName));
 	normEst.setNumberOfThreads(6);
 	normEst.setSearchMethod(tree);
 	normEst.setKSearch(normKSearch);
@@ -329,7 +301,7 @@ void ScandataManager::findPointCloudBoundary(int maxSacIterations, double sacThr
 	emit updateStatus(tr("BoundaryEstimation begin."));
 	pcl::PointCloud<pcl::Boundary> boundaries;
 	pcl::BoundaryEstimation<PointT, pcl::Normal, pcl::Boundary> est;
-	est.setInputCloud(m_finalCloud);
+	est.setInputCloud(m_currentSelectedPointClouds.value(srcName));
 	est.setInputNormals(normals);
 	est.setSearchMethod(tree);
 	est.setKSearch(boundKSearch);
@@ -339,32 +311,50 @@ void ScandataManager::findPointCloudBoundary(int maxSacIterations, double sacThr
 
 	pcl::PointCloud<PointT>::Ptr boundPoints(new pcl::PointCloud<PointT>);
 	int countBoundaries = 0;
-	for (int i = 0; i < m_finalCloud->size(); i++) {
+	for (int i = 0; i < m_currentSelectedPointClouds.value(srcName)->size(); i++) {
 		int a = static_cast<int>(boundaries.points[i].boundary_point);
 		if (a == 1) {
 			//是边界点
-			boundPoints->push_back(m_finalCloud->points[i]);
+			boundPoints->push_back(m_currentSelectedPointClouds.value(srcName)->points[i]);
 			countBoundaries++;
 		}
 	}
 	qDebug() << "Boundary point size: " << countBoundaries << endl;
 	emit updateStatus(tr("BoundaryEstimation done."));
-	m_finalCloud.swap(boundPoints);
-	emit updateViewer(1, m_finalCloud);
+	
+	//列表中增加边界点云
+	QString boundaryName = srcName + "_boundary";
+	boundaryName = m_mapSrcToPointCloud.mapSrcToPointCloud(boundaryName, boundPoints);
+	
+	emit updatePointCloudViewer(2, boundPoints, boundaryName);
+	emit signalAddPointCloudList(boundaryName);
 }
 
-void ScandataManager::resetPointCloud()
+
+MapSrcToPointCloud::MapSrcToPointCloud()
 {
-	m_filteredClouds.clear();
-	m_finalCloud = NULL;
-	for (int i = 0; i < m_clouds.size(); i++) {
-		PointCloudT::Ptr tempCloud(new PointCloudT);
-		pcl::copyPointCloud(*m_clouds[i], *tempCloud);
-		m_filteredClouds.push_back(tempCloud);
-		qDebug() << "Reset " << tempCloud->points.size() << " data to filteredClouds." << endl;
-	}
-
-	emit removeViewPortPointCloud(0);
-	emit updateViewer(1, m_clouds);
 }
 
+QString MapSrcToPointCloud::mapSrcToPointCloud(const QString & srcName, PointCloudT::Ptr pointCloud)
+{
+	QString src = srcName;
+	int i = 1;
+	while (m_mapSrcToPointCloud.contains(src)) {
+		src = src.left(srcName.size()) + "(" + QString::number(i) + ")";
+		i++;
+	}
+	m_mapSrcToPointCloud.insert(src, pointCloud);
+	return src;
+}
+
+void MapSrcToPointCloud::updateSrcToPointCloud(const QString & srcName, PointCloudT::Ptr pointCloud)
+{
+	m_mapSrcToPointCloud.insert(srcName, pointCloud);
+}
+
+PointCloudT::Ptr MapSrcToPointCloud::getPointCloudFromSrc(const QString & srcName)
+{
+	if (m_mapSrcToPointCloud.contains(srcName))
+		return m_mapSrcToPointCloud.value(srcName);
+	return PointCloudT::Ptr();
+}

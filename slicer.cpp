@@ -200,6 +200,17 @@ QVector3D Slicer::calcuInterSectPoint(double z, QSharedPointer<Edge> spEdge)
 	return sectPoint;
 }
 
+QVector3D Slicer::calcuScanLineSectPoint(double scanLineY, QSharedPointer<LayerEdge> spLayerEdge)
+{
+	QVector3D sectPoint;
+	double lamda = (scanLineY - spLayerEdge->spLEHead->position.y()) / (spLayerEdge->spLEEnd->position.y() - spLayerEdge->spLEHead->position.y());
+	double dx = spLayerEdge->spLEEnd->position.x() - spLayerEdge->spLEHead->position.x();
+	sectPoint.setX(spLayerEdge->spLEHead->position.x() + lamda * dx);
+	sectPoint.setY(scanLineY);
+	sectPoint.setZ(spLayerEdge->spLEHead->position.z());
+	return sectPoint;
+}
+
 void Slicer::judgeFaceType(double z, QSharedPointer<Triangle> spSurface)
 {
 	double z_min = getZMin(spSurface);
@@ -293,15 +304,28 @@ void Slicer::drawPolyLine()
 void Slicer::convertLayertoPointCloud(double layer)
 {
 	if (m_sliced == false)	return;
+
+	QVector<double> pointX;
+	QVector<double> pointY;
+	QVector<QSharedPointer<LayerEdge>> layerEdges;	//轮廓边
+	double yScanLineMin = 10000;	//扫描线最低点
+	double yScanLineMax = -10000;	//扫描线最高点
+
 	for (auto itLayer = m_layers.begin(); itLayer != m_layers.end(); itLayer++) {
 		if (qAbs((*itLayer)->z - layer)<0.0001) {
-			QVector<double> pointX;
-			QVector<double> pointY;
 			//遍历每个轮廓线的线段
 			for (auto itPolyLine = (*itLayer)->m_polyLines.begin(); itPolyLine != (*itLayer)->m_polyLines.end(); itPolyLine++) {
 				for (int i = 0; i < (*itPolyLine)->m_linkPoints.size() - 1; i++) {
+					//建立轮廓边表
+					QSharedPointer<LayerEdge> tempLayerEdge(QSharedPointer<LayerEdge>(new LayerEdge((*itPolyLine)->m_linkPoints[i], (*itPolyLine)->m_linkPoints[i + 1])));
+					layerEdges.push_back(tempLayerEdge);
+
 					QVector3D point1((*itPolyLine)->m_linkPoints[i]->position);
 					QVector3D point2((*itPolyLine)->m_linkPoints[i + 1]->position);
+					//确定扫描线范围
+					if (point1.y() > yScanLineMax)	yScanLineMax = point1.y();
+					if (point1.y() < yScanLineMin)	yScanLineMin = point1.y();
+
 					//如果线段大于0.15mm,密化
 					if ((point2 - point1).length() > 0.15) {
 						double deltX = point2.x() - point1.x();
@@ -321,11 +345,51 @@ void Slicer::convertLayertoPointCloud(double layer)
 					}
 				}
 			}
-			//输出
-			emit stlLayerToPointCloud(pointX, pointY, layer);
 			break;
 		}
 	}
+	//填充内部点
+	double scanResolution = 0.1;
+	double scanLine = yScanLineMin + scanResolution;
+	while(scanLine < yScanLineMax) {
+		QVector<QSharedPointer<LayerEdge>> intsectEdges;
+		for (auto it = layerEdges.begin(); it != layerEdges.end(); it++) {
+			//摄动法处理相交顶点
+			if (qAbs((*it)->spLEHead->position.y() - scanLine)<0.000001)
+				(*it)->spLEHead->position += QVector3D(0.0, perturbationVal, 0.0);
+			if (qAbs((*it)->spLEEnd->position.y() - scanLine) < 0.000001)
+				(*it)->spLEEnd->position += QVector3D(0.0, perturbationVal, 0.0);
+			(*it)->sortVertex();
+		}
+		//判断相交
+		for (auto it = layerEdges.begin(); it != layerEdges.end(); it++) {
+			if ((*it)->spVMin->position.y() < scanLine && (*it)->spVMax->position.y() > scanLine)
+				intsectEdges.push_back(*it);
+		}
+		//求交点
+		QVector<QVector3D> sectPoints;
+		for (auto it = intsectEdges.begin(); it != intsectEdges.end(); it++)
+			sectPoints.push_back(calcuScanLineSectPoint(scanLine, *it));
+		//交点按X值从小到大排序
+		qSort(sectPoints.begin(), sectPoints.end(), [](const QVector3D& pointA, const QVector3D& pointB) {
+			return pointA.x() < pointB.x(); });
+		//填充
+		for (int i = 0; i < sectPoints.size()-1; i++) {
+			if ((sectPoints[i+1].x() - sectPoints[i].x()) > 0.15) {
+				QVector3D currentPoint(sectPoints[i]);
+				currentPoint.setX(currentPoint.x() + 0.1);
+				while (currentPoint.x()<sectPoints[i+1].x()) {
+					pointX.push_back(currentPoint.x());
+					pointY.push_back(scanLine);
+					currentPoint.setX(currentPoint.x() + 0.1);
+				}
+			}
+			i++;
+		}
+		scanLine += scanResolution;
+	}
+	//输出
+	emit stlLayerToPointCloud(pointX, pointY, layer);
 }
 
 bool Slicer::updateData()

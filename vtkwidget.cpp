@@ -36,27 +36,17 @@ VTKWidget::~VTKWidget()
 {
 }
 
-void VTKWidget::updateViewer(int viewPort, QVector<PointCloudT::Ptr> clouds)
+/*更新显示选中的点云*/
+void VTKWidget::repaintPointCloudViewer(int viewPort, const QMap<QString, PointCloudT::Ptr>& clouds)
 {
 	m_viewer->removeAllPointClouds(viewPort);
-	for (int i = 0; i < clouds.size(); i++) {
-		std::stringstream ss;
-		ss << "port" << viewPort << i;
-		m_viewer->addPointCloud<PointT> (clouds[i], ss.str(), viewPort);
-	}
+	for (auto srcName : clouds.keys())
+		m_viewer->addPointCloud<PointT>(clouds.value(srcName), srcName.toStdString(), viewPort);
 	this->update();
 }
 
-void VTKWidget::updateViewer(int viewPort, PointCloudT::Ptr cloud)
-{
-	m_viewer->removeAllPointClouds(viewPort);
-	std::stringstream ss;
-	ss << "port" << viewPort;
-	m_viewer->addPointCloud<PointT> (cloud, ss.str(), viewPort);
-	this->update();
-}
-
-void VTKWidget::addViewer(int viewPort, PointCloudT::Ptr cloud, QString id)
+/*更新指定点云*/
+void VTKWidget::updatePointCloudViewer(int viewPort, PointCloudT::Ptr cloud, const QString& id)
 {
 	std::string idString = id.toStdString();
 	m_viewer->removePointCloud(idString, viewPort);

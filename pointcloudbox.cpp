@@ -17,11 +17,11 @@ PointCloudBox::PointCloudBox(QWidget* parent)
 	m_tabWidget->addTab(creatICPPage(), tr("ICP"));
 	m_tabWidget->addTab(creatBoundaryPage(), tr("Boundary"));
 	//Button
-	m_resetButton = new QPushButton(tr("Reset PointCloud"), this);
+	m_clearButton = new QPushButton(tr("Clear PointCloud"), this);
 	//GroupBox
 	QVBoxLayout* vLayout = new QVBoxLayout;
-	vLayout->addWidget(m_tabWidget);
-	vLayout->addWidget(m_resetButton);
+	vLayout->addWidget(m_tabWidget,0);
+	vLayout->addWidget(m_clearButton);
 	m_pointCloudGroupBox = new QGroupBox(tr("PointCloud"), this);
 	m_pointCloudGroupBox->setLayout(vLayout);
 
@@ -35,7 +35,7 @@ PointCloudBox::PointCloudBox(QWidget* parent)
 	connect(m_sacButton, &QPushButton::clicked, this, &PointCloudBox::onSACButtonClicked);
 	connect(m_icpButton, &QPushButton::clicked, this, &PointCloudBox::onICPButtonClicked);
 	connect(m_boundaryButton, &QPushButton::clicked, this, &PointCloudBox::onBoundaryButtonClicked);
-	connect(m_resetButton, &QPushButton::clicked, this, &PointCloudBox::onResetButtonClicked);
+	connect(m_clearButton, &QPushButton::clicked, this, &PointCloudBox::clearPointCloud);
 }
 
 PointCloudBox::~PointCloudBox()
@@ -54,11 +54,6 @@ void PointCloudBox::onSACButtonClicked()
 	int maxIterations = m_sacIterSpinBox->value();
 	double thresh = m_sacThreshSpinBox->value();
 	emit sacPointCloud(maxIterations, thresh);
-}
-
-void PointCloudBox::onResetButtonClicked()
-{
-	emit resetPointCloud();
 }
 
 void PointCloudBox::onICPButtonClicked()

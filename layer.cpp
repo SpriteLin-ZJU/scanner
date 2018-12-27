@@ -115,3 +115,21 @@ PolyLine::PolyLine()
 Layer::Layer()
 {
 }
+
+LayerEdge::LayerEdge()
+{
+}
+
+LayerEdge::LayerEdge(QSharedPointer<PointTri> _spHead, QSharedPointer<PointTri> _spEnd)
+	:spLEHead(_spHead),spLEEnd(_spEnd)
+{
+	sortVertex();
+}
+
+void LayerEdge::sortVertex()
+{
+	spVMin = spLEHead;
+	spVMax = spLEEnd;
+	if (spVMin->position.y() > spVMax->position.y())
+		qSwap(spVMin, spVMax);
+}
